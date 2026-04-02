@@ -1,0 +1,210 @@
+/* colors giống Taziu */
+:root {
+    --primary: #2C3E87;
+    --accent: #5A6FF0;
+    --bg-light: #f9f9f9;
+    --text-dark: #222;
+}
+
+/* Reset cơ bản */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    color: var(--text-dark);
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 40px;
+    background: linear-gradient(90deg, #2C3E87, #3B4ACF);
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+}
+
+.logo {
+    font-weight: bold;
+    font-size: 24px;
+    color: white;
+}
+
+.nav {
+    display: flex;
+    gap: 24px;
+}
+
+.nav-link {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.nav-link:hover {
+    color: #5A6FF0;
+}
+
+.header-right .login-btn {
+    background-color: #5A6FF0;
+    border: none;
+    color: white;
+    padding: 8px 20px;
+    border-radius: 24px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s;
+}
+
+.header-right .login-btn:hover {
+    background-color: #7f8cff;
+}
+
+/* Hero */
+.hero {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 80px 40px;
+    background: linear-gradient(180deg, #2C3E87 0%, #1B2867 100%);
+    color: white;
+}
+
+.hero-text {
+    max-width: 550px;
+}
+
+.hero-text h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+}
+
+.hero-text .highlight {
+    color: #5A6FF0;
+}
+
+.hero-text p {
+    font-size: 18px;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+.hero-input {
+    display: flex;
+    gap: 10px;
+}
+
+.hero-input input {
+    flex: 1;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: none;
+    font-size: 16px;
+}
+
+.hero-input button {
+    background-color: #5A6FF0;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.hero-input button:hover {
+    background-color: #7f8cff;
+}
+
+.hero-image img {
+    max-width: 400px;
+}
+/* Streamers */
+.streamers {
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.streamers h2 {
+    color: var(--primary);
+    font-size: 32px;
+    margin-bottom: 40px;
+}
+
+.streamers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+}
+
+.streamers-grid img {
+    width: 100%;
+    border-radius: 10px;
+}
+
+.streamers-grid p {
+    margin-top: 8px;
+    font-weight: bold;
+}
+
+/* Feed */
+.feed {
+    background-color: var(--bg-light);
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.feed h2 {
+    color: var(--primary);
+    font-size: 32px;
+    margin-bottom: 20px;
+}
+
+.feed-placeholder {
+    height: 250px;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+}
+
+/* Partners */
+.partners {
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.partners h2 {
+    color: var(--primary);
+    font-size: 32px;
+    margin-bottom: 30px;
+}
+
+.partners-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 20px;
+    align-items: center;
+    justify-items: center;
+}
+
+/* Footer */
+footer {
+    background-color: var(--primary);
+    color: white;
+    text-align: center;
+    padding: 40px 20px;
+}
