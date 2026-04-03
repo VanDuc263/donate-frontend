@@ -1,0 +1,38 @@
+/* Login page */
+.login-page {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(180deg, #2C3E87, #1B2867);
+}
+
+.login-box {
+    background: white;
+    padding: 40px;
+    border-radius: 12px;
+    width: 300px;
+    text-align: center;
+}
+
+.login-box h2 {
+    margin-bottom: 20px;
+}
+
+.login-box input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+.login-box button {
+    width: 100%;
+    padding: 10px;
+    background-color: #5A6FF0;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
