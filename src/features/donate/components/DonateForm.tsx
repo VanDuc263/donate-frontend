@@ -1,5 +1,5 @@
 import {useState} from "react";
-import {donate} from "../services/donateService";
+import {donate} from "../donateApi";
 
 export default function DonateForm(){
     const [name,setName] = useState("");

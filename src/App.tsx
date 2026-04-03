@@ -4,7 +4,6 @@ import Streamers from "./components/Streamers";
 import Feed from "./components/Feed";
 import Partners from "./components/Partners";
 import Footer from "./components/Footer";
-import {AuthProvider} from "./contexts/AuthContext";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Header from "./components/Header"
@@ -24,16 +23,14 @@ function Home() {
 }
 
 function App() {
-    return (
-        <AuthProvider>
+        return (
             <BrowserRouter>
                 <Routes>
                     <Route path="/" element={<Home/>}/>
                     <Route path="/login" element={<Login/>}/>
                 </Routes>
             </BrowserRouter>
-        </AuthProvider>
-    );
+        );
 }
 
 export default App;
