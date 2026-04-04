@@ -57,6 +57,49 @@ nav a:hover { opacity: 1; }
 .streamers { padding: 60px 10%; }
 .streamers h2 { text-align: center; margin-bottom: 30px; }
 
+/* ===== Partners Section ===== */
+
+.partners {
+    padding: 60px 10%;
+    text-align: center;
+}
+
+.partners h2 {
+    margin-bottom: 30px;
+    color: #38bdf8;
+    font-size: 24px;
+}
+
+/* Grid */
+.partners-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 25px;
+    align-items: center;
+}
+
+/* Logo */
+.partners-grid img {
+    width: 100%;
+    max-width: 120px;
+    margin: 0 auto;
+    padding: 15px;
+    border-radius: 12px;
+
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+/* Hover effect */
+.partners-grid img:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 0 15px rgba(56,189,248,0.6);
+    background: rgba(255, 255, 255, 0.1);
+}
+
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

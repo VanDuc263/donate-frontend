@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../app/store";
 import { logout } from "../features/auth/authSlice";
@@ -13,9 +13,9 @@ const Header = () => {
             <div className="header-left">
                 <h1>ZyScan</h1>
                 <nav>
-                    <a href="#">Trang chủ</a>
+                    <Link to="/">Trang chủ</Link>
                     <a href="#">Streamer</a>
-                    <a href="#">Donate</a>
+                    <Link to="/donate">Donate</Link>
                 </nav>
 
             </div>

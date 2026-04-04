@@ -1,9 +1,6 @@
 import "../styles/styles.css";
 
 const partners = [
-    "/images/bank1.png",
-    "/images/bank2.png",
-    "/images/bank3.png",
     "/images/pay1.png",
     "/images/pay2.png",
 ];
