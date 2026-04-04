@@ -1,20 +1,21 @@
-import "../styles/styles.css";
-
 const streamers = [
-    { name: "Hoàng Luân", img: "asserts/img/mokup.png" },
-    { name: "Thầy Giáo Ba", img: "/images/ba.jpg" },
-    { name: "Optimus", img: "/images/optimus.jpg" },
-    { name: "Tú Lê", img: "/images/tule.jpg" },
+    { name: "MixiGaming", img: "https://i.pravatar.cc/150?img=1", money: "246M", rank: 1 },
+    { name: "Tabi", img: "https://i.pravatar.cc/150?img=2", money: "51M", rank: 2 },
+    { name: "Hướng Mêu", img: "https://i.pravatar.cc/150?img=3", money: "38M", rank: 3 },
+    { name: "Độ Mixi Clone", img: "https://i.pravatar.cc/150?img=4", money: "20M" },
 ];
 
 const Streamers = () => (
     <section className="streamers">
-        <h2>Streamer đang dùng WeScan</h2>
-        <div className="streamers-grid">
-            {streamers.map((s) => (
-                <div key={s.name}>
-                    <img src={s.img} alt={s.name} />
-                    <p>{s.name}</p>
+        <h2>🔥 Top Streamers</h2>
+
+        <div className="grid">
+            {streamers.map((s, i) => (
+                <div className="card" key={i}>
+                    {s.rank && <span className="rank">#{s.rank}</span>}
+                    <img src={s.img} />
+                    <h3>{s.name}</h3>
+                    <p className="money">{s.money} VNĐ</p>
                 </div>
             ))}
         </div>

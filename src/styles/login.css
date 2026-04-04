@@ -1,38 +1,59 @@
-/* Login page */
 .login-page {
     height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(180deg, #2C3E87, #1B2867);
+    background: #0f172a;
 }
 
 .login-box {
-    background: white;
+    background: #1e293b;
     padding: 40px;
-    border-radius: 12px;
-    width: 300px;
+    border-radius: 16px;
+    width: 320px;
     text-align: center;
 }
 
 .login-box h2 {
     margin-bottom: 20px;
+    color: #38bdf8;
 }
 
+/* INPUT */
 .login-box input {
     width: 100%;
-    padding: 10px;
+    padding: 12px;
     margin-bottom: 15px;
     border-radius: 8px;
-    border: 1px solid #ccc;
+    border: none;
+    outline: none;
+    background: #0f172a;
+    color: white;
 }
 
+.login-box input::placeholder {
+    color: #94a3b8;
+}
+
+/* BUTTON */
 .login-box button {
     width: 100%;
-    padding: 10px;
-    background-color: #5A6FF0;
-    color: white;
+    padding: 12px;
+    background: #38bdf8;
+    color: black;
     border: none;
     border-radius: 8px;
     cursor: pointer;
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+.login-box button:hover {
+    background: #0ea5e9;
+}
+
+/* ERROR */
+.login-box p {
+    margin-top: 10px;
+    color: #f87171;
 }

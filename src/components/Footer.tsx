@@ -1,8 +1,6 @@
-import "../styles/styles.css";
-
 const Footer = () => (
     <footer>
-        <p>© 2026 Wescan Clone – Công cụ donate & QR Pay cho streamer</p>
+        <p>© 2026 ZyScan - Nền tảng donate cho streamer</p>
     </footer>
 );
 

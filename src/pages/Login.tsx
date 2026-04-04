@@ -44,7 +44,7 @@ const Login = () => {
                     {loading ? "Loading..." : "Đăng nhập"}
                 </button>
 
-                {error && <p style={{ color: "red" }}>{error}</p>}
+                {error && <p className="error">{error}</p>}
             </div>
         </div>
     );

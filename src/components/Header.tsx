@@ -11,20 +11,20 @@ const Header = () => {
     return (
         <header className="header">
             <div className="header-left">
-                <div className="logo">ZyScan</div>
+                <h1>ZyScan</h1>
+                <nav>
+                    <a href="#">Trang chủ</a>
+                    <a href="#">Streamer</a>
+                    <a href="#">Donate</a>
+                </nav>
+
             </div>
 
-            <div className="header-right">
-                {!token ? (
-                    <button onClick={() => navigate("/login")}>
-                        Đăng nhập
-                    </button>
-                ) : (
-                    <button onClick={() => dispatch(logout())}>
-                        Đăng xuất
-                    </button>
-                )}
-            </div>
+            {!token ? (
+                <button onClick={() => navigate("/login")}>Đăng nhập</button>
+            ) : (
+                <button onClick={() => dispatch(logout())}>Đăng xuất</button>
+            )}
         </header>
     );
 };

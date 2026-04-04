@@ -1,11 +1,10 @@
-import "../styles/styles.css";
-
 const Feed = () => (
     <section className="feed">
-        <h2>Livestream & Feed</h2>
-        <div className="feed-placeholder">
-            Thẻ Livestream / Feed ở đây
-        </div>
+        <h2>💸 Donate gần đây</h2>
+
+        <div className="feed-item">Nguyễn Văn A donate 100.000 VNĐ</div>
+        <div className="feed-item">Trần Văn B donate 50.000 VNĐ</div>
+        <div className="feed-item">Lê Văn C donate 200.000 VNĐ</div>
     </section>
 );
 
