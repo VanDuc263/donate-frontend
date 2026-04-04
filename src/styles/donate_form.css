@@ -1,0 +1,174 @@
+/* ===== OVERLAY ===== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+/* ===== MODAL ===== */
+.modal-container {
+    width: 650px;
+    background: #1f1f2e;
+    border-radius: 12px;
+    padding: 20px;
+    color: #fff;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    animation: fadeIn 0.2s ease;
+}
+
+/* ===== HEADER ===== */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.modal-header h2 {
+    font-size: 20px;
+}
+
+.modal-header button {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.modal-header button:hover {
+    color: #fff;
+}
+
+/* ===== TABS ===== */
+.modal-tabs {
+    display: flex;
+    gap: 20px;
+    border-bottom: 1px solid #333;
+    margin-bottom: 20px;
+}
+
+.modal-tabs button {
+    background: none;
+    border: none;
+    color: #aaa;
+    padding-bottom: 10px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.modal-tabs button:hover {
+    color: #fff;
+}
+
+/* active tab (bạn có thể thêm class active sau) */
+.modal-tabs button.active {
+    color: #4da6ff;
+    border-bottom: 2px solid #4da6ff;
+}
+
+/* ===== CONTENT ===== */
+.modal-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ===== WALLET TAB ===== */
+.modal-content > div {
+    display: flex;
+    gap: 20px;
+}
+
+/* LEFT (balance) */
+.modal-content > div > div:first-child {
+    width: 40%;
+    text-align: center;
+    background: #2a2a3d;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.modal-content > div > div:first-child h3 {
+    font-size: 26px;
+    margin: 10px 0;
+}
+
+.modal-content > div > div:first-child button {
+    width: 100%;
+    padding: 8px;
+    background: #333;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+}
+
+/* RIGHT (form) */
+.modal-content > div > div:last-child {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* INPUT */
+.modal-content input {
+    padding: 10px;
+    border: none;
+    border-bottom: 2px solid #444;
+    background: transparent;
+    color: white;
+    outline: none;
+}
+
+.modal-content input:focus {
+    border-color: #4da6ff;
+}
+
+/* BUTTON */
+.modal-content button {
+    margin-top: 10px;
+    padding: 10px;
+    background: #4da6ff;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.modal-content button:hover {
+    background: #3399ff;
+}
+
+/* ===== QR TAB ===== */
+.modal-content img {
+    width: 200px;
+    border-radius: 8px;
+}
+
+.modal-content ul {
+    padding-left: 18px;
+    color: #ccc;
+}
+
+.modal-content li {
+    margin-bottom: 5px;
+}
+
+/* ===== ANIMATION ===== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}

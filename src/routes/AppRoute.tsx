@@ -5,6 +5,7 @@ import DonateForm from "../features/donate/components/DonateForm";
 import {ReactNode} from "react";
 import MainLayout from "../utils/MainLayout";
 import DonatePage from "../pages/DonatePage";
+import StreamerDetail from "../features/streamer/components/StreamerDetail";
 
 
 function ProtectedRoute(props: { children: ReactNode }) {
@@ -18,17 +19,16 @@ function ProtectedRoute(props: { children: ReactNode }) {
 const AppRoute = () => {
     return (
         <Routes>
-            <Route element={<MainLayout/>}>
+            <Route element={<MainLayout />}>
                 <Route path="/" element={<Home />} />
-                <Route
-                    path="/donate"
-                    element={
-                        <ProtectedRoute>
-                            <DonateForm />
-                        </ProtectedRoute>
-                    }
-                />
+
+                {/* Trang list hoặc landing donate */}
+                <Route path="/donate" element={<DonatePage />} />
+
+                {/* Detail streamer */}
+                <Route path="/streamer/:id" element={<StreamerDetail />} />
             </Route>
+
             <Route path="/login" element={<Login />} />
         </Routes>
     );

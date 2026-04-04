@@ -11,8 +11,8 @@ const Header = () => {
     return (
         <header className="header">
             <div className="header-left">
-                <h1>ZyScan</h1>
                 <nav>
+                    <Link to="/" className="header-signature">ZyScan</Link>
                     <Link to="/">Trang chủ</Link>
                     <a href="#">Streamer</a>
                     <Link to="/donate">Donate</Link>

@@ -14,7 +14,13 @@ body { background: #0f172a; color: white; }
     justify-content: space-around;
     align-items: center;
 }
-.header h1 { color: #38bdf8; }
+.header-left nav{
+    align-items: center;
+}
+.header-signature{
+    color: #38bdf8;
+    font-size: 30px;
+}
 
 nav a {
     color: white;

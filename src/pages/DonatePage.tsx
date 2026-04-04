@@ -1,5 +1,6 @@
 import React from "react";
 import "../styles/donate_page.css";
+import {useNavigate} from "react-router-dom";
 
 const streamers = [
     { name: "MixiGaming", img: "https://i.pravatar.cc/150?img=1", money: "246M", rank: 1 },
@@ -9,6 +10,7 @@ const streamers = [
 ];
 
 const DonatePage = () => {
+    const navigate = useNavigate();
     return (
         <div className="donate-container">
             {/* Header */}
@@ -27,7 +29,7 @@ const DonatePage = () => {
 
                 <div className="streamer-grid">
                     {streamers.map((s, i) => (
-                        <div key={i} className="streamer-card">
+                        <div key={i} className="streamer-card"  onClick={() => navigate(`/streamer/${i}`)}>
                             <img src={s.img} alt={s.name} />
                             <span>{s.name}</span>
                         </div>
