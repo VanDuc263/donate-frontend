@@ -1,0 +1,198 @@
+/* ===== Register Page ===== */
+.register-page {
+    min-height: 100vh;
+    background: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.register-page::before {
+    content: '';
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.07) 0%, transparent 70%);
+    top: -100px;
+    right: -100px;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.register-page::after {
+    content: '';
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(129, 140, 248, 0.06) 0%, transparent 70%);
+    bottom: -100px;
+    left: -80px;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.register-box {
+    position: relative;
+    z-index: 1;
+    background: #1e293b;
+    border: 1px solid rgba(56, 189, 248, 0.15);
+    border-radius: 20px;
+    padding: 40px 36px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+}
+
+/* Logo */
+.reg-logo {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.logo-text {
+    font-size: 30px;
+    font-weight: 800;
+    color: #38bdf8;
+    letter-spacing: -0.5px;
+}
+
+.reg-logo p {
+    font-size: 14px;
+    opacity: 0.55;
+    margin-top: 4px;
+}
+
+/* Role selector */
+.role-selector {
+    display: flex;
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 22px;
+    gap: 4px;
+}
+
+.role-selector button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.55);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.role-selector button.active {
+    background: #38bdf8;
+    color: #0f172a;
+}
+
+/* Inputs */
+.register-box input {
+    width: 100%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: white;
+    padding: 13px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    margin-bottom: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.register-box input::placeholder { opacity: 0.45; }
+
+.register-box input:focus {
+    border-color: rgba(56, 189, 248, 0.5);
+    background: rgba(56, 189, 248, 0.05);
+}
+
+/* Streamer notice */
+.streamer-notice {
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: #7dd3fc;
+    margin-bottom: 14px;
+}
+
+/* Error */
+.reg-error {
+    color: #f87171;
+    font-size: 13px;
+    background: rgba(248,113,113,0.08);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    border: 1px solid rgba(248,113,113,0.2);
+}
+
+/* Register button */
+.reg-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+    border: none;
+    color: #0f172a;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+    margin-bottom: 18px;
+}
+
+.reg-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.reg-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* Divider */
+.reg-divider {
+    text-align: center;
+    font-size: 13px;
+    opacity: 0.45;
+    margin-bottom: 12px;
+}
+
+/* Login link */
+.reg-login-link {
+    display: block;
+    text-align: center;
+    color: #38bdf8;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 10px;
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 10px;
+    transition: 0.2s;
+}
+
+.reg-login-link:hover {
+    background: rgba(56, 189, 248, 0.08);
+}
+
+/* Success state */
+.reg-success {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.success-icon { font-size: 48px; margin-bottom: 16px; }
+
+.reg-success h3 {
+    font-size: 20px;
+    margin-bottom: 8px;
+    color: #4ade80;
+}
+
+.reg-success p { opacity: 0.6; font-size: 14px; }
