@@ -6,12 +6,17 @@ import {ReactNode} from "react";
 import MainLayout from "../utils/MainLayout";
 import DonatePage from "../pages/DonatePage";
 import StreamerDetail from "../features/streamer/components/StreamerDetail";
+import Register from "../pages/Register";
+import Profile from "../pages/Profile";
+import Leaderboard from "../pages/Leaderboard";
+import Dashboard from "../pages/Dashboard";
+import NotFound from "../pages/NotFound";
 
 
 function ProtectedRoute(props: { children: ReactNode }) {
     return (
         <div>
-            <DonatePage></DonatePage>
+            {props.children}
         </div>
     );
 }
@@ -27,9 +32,31 @@ const AppRoute = () => {
 
                 {/* Detail streamer */}
                 <Route path="/streamer/:id" element={<StreamerDetail />} />
-            </Route>
+                <Route path="/leaderboard" element={<Leaderboard />} />
 
+                {/* Protected routes */}
+                <Route path="/dashboard" element={
+                        <ProtectedRoute>
+                            <Dashboard />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route path="/profile" element={
+                        <ProtectedRoute>
+                            <Profile />
+                        </ProtectedRoute>
+                    }
+                />
+            </Route>
+             
+
+            
+
+            <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
+
+            {/* 404 */}
+            <Route path="*" element={<NotFound />} />
         </Routes>
     );
 };
