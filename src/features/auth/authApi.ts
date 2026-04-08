@@ -7,3 +7,6 @@ export const login = (data : any) => {
 export const loginWithGoogle = async (credential: string) => {
     return axiosClient.post("/api/auth/google", { credential });
 }
+export const getMe = async () => {
+    return axiosClient.get("/api/auth/me");
+}

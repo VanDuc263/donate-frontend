@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import {login,loginWithGoogle} from './authApi'
+import {getMe, login, loginWithGoogle} from './authApi'
 
 
 export const loginThunk = createAsyncThunk(
@@ -31,6 +31,18 @@ export const loginGoogleThunk = createAsyncThunk(
         }
     }
 );
+export const meThunk = createAsyncThunk(
+    "auth/me",
+    async (_:void, thunkAPI) => {
+        try {
+            const res = await getMe();
+            return res.data;
+        } catch (err) {
+            return thunkAPI.rejectWithValue("Token không hợp lệ");
+        }
+    }
+);
+
 const authSlice = createSlice({
     name: "auth",
     initialState: {
@@ -62,6 +74,19 @@ const authSlice = createSlice({
             .addCase(loginThunk.rejected, (state, action: any) => {
                 state.loading = false;
                 state.error = action.payload;
+            })
+            .addCase(meThunk.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(meThunk.fulfilled, (state, action) => {
+                state.loading = false;
+                state.user = action.payload;
+            })
+            .addCase(meThunk.rejected, (state) => {
+                state.loading = false;
+                state.user = null;
+                state.token = null;
+                localStorage.removeItem("token");
             })
             .addCase(loginGoogleThunk.pending, (state) => {
                 state.loading = true;
