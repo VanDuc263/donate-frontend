@@ -4,6 +4,7 @@ import registerReducer from "../features/auth/registerSlice";
 import profileReducer from "../features/profile/profileSlice";
 import leaderboardReducer from "../features/leaderboard/leaderboardSlice";
 import dashboardReducer from "../features/dashboard/dashboardSlice";
+import adminReducer from "../features/admin/adminSlice";
 
 export const store = configureStore({
     reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
         register: registerReducer,
         leaderboard: leaderboardReducer,
         dashboard: dashboardReducer,
+        admin: adminReducer,
     },
 });
 

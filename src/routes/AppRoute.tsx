@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "../pages/Login";
 import Home from "../pages/Home";
 import DonateForm from "../features/donate/components/DonateForm";
@@ -12,50 +12,54 @@ import Leaderboard from "../pages/Leaderboard";
 import Dashboard from "../pages/Dashboard";
 import NotFound from "../pages/NotFound";
 
+import AdminOverview from "../admin/pages/AdminOverview";
+import AdminUsers from "../admin/pages/AdminUsers";
+import AdminStreamers from "../admin/pages/AdminStreamers";
+import AdminTransactions from "../admin/pages/AdminTransactions";
+import AdminReports from "../admin/pages/AdminReports";
+import AdminSettings from "../admin/pages/AdminSettings";
+import { useSelector } from "react-redux";
+import { RootState } from "../app/store";
+import AdminLayout from "../admin/AdminLayout";
 
-function ProtectedRoute(props: { children: ReactNode }) {
-    return (
-        <div>
-            {props.children}
-        </div>
-    );
+
+function ProtectedRoute({ children }: { children: ReactNode }) {
+    const token = useSelector((state: RootState) => state.auth.token);
+    return token ? <>{children}</> : <Navigate to="/login" replace />;
+}
+
+function AdminRoute({ children }: { children: ReactNode }) {
+    return <>{children}</>;
 }
 
 const AppRoute = () => {
     return (
         <Routes>
+            {/* ── Public + User routes (with Header) ── */}
             <Route element={<MainLayout />}>
                 <Route path="/" element={<Home />} />
-
-                {/* Trang list hoặc landing donate */}
                 <Route path="/donate" element={<DonatePage />} />
-
-                {/* Detail streamer */}
                 <Route path="/streamer/:id" element={<StreamerDetail />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
-
-                {/* Protected routes */}
-                <Route path="/dashboard" element={
-                        <ProtectedRoute>
-                            <Dashboard />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route path="/profile" element={
-                        <ProtectedRoute>
-                            <Profile />
-                        </ProtectedRoute>
-                    }
-                />
+                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             </Route>
-             
 
-            
-
-            <Route path="/register" element={<Register />} />
+            {/* ── Auth routes (no layout) ── */}
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
-            {/* 404 */}
+            {/* ── Admin routes (AdminLayout with sidebar) ── */}
+            <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+                <Route index element={<AdminOverview />} />
+                <Route path="users" element={<AdminUsers />} />
+                <Route path="streamers" element={<AdminStreamers />} />
+                <Route path="transactions" element={<AdminTransactions />} />
+                <Route path="reports" element={<AdminReports />} />
+                <Route path="settings" element={<AdminSettings />} />
+            </Route>
+
+            {/* ── 404 ── */}
             <Route path="*" element={<NotFound />} />
         </Routes>
     );
