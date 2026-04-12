@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, ChangeEvent } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { loginThunk, loginGoogleThunk } from "../features/auth/authSlice";
 import { RootState, AppDispatch } from "../app/store";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import "../styles/login.css";
 
@@ -11,8 +11,8 @@ const Login = () => {
     const navigate = useNavigate();
     const { loading, error } = useSelector((state: RootState) => state.auth);
 
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
+    const [username, setUsername] = useState<string>("");
+    const [password, setPassword] = useState<string>("");
 
     const handleLogin = async () => {
         if (!username || !password) return;
@@ -38,14 +38,14 @@ const Login = () => {
                     type="text"
                     placeholder="Username..."
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                 />
 
                 <input
                     type="password"
                     placeholder="Password..."
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 />
 
                 <button onClick={handleLogin} disabled={loading}>
@@ -56,7 +56,7 @@ const Login = () => {
 
                 <div className="social-login">
                     <GoogleLogin
-                        onSuccess={(credentialResponse) => {
+                        onSuccess={(credentialResponse: any) => {
                             console.log("Google response:", credentialResponse);
 
                             if (credentialResponse.credential) {
@@ -71,6 +71,9 @@ const Login = () => {
                     </button>
                 </div>
 
+                <div className="divider">Chưa có tài khoản?</div>
+                <Link to="/register" className="register-link">Đăng ký ngay</Link>
+  
                 <button className="back-btn" onClick={() => navigate(-1)}>
                     ← Quay lại
                 </button>

@@ -1,0 +1,105 @@
+/* ===== 404 Not Found Page ===== */
+.nf-page {
+    min-height: 100vh;
+    background: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    text-align: center;
+    color: white;
+}
+
+.nf-content {
+    position: relative;
+}
+
+/* Glitch 404 */
+.nf-code {
+    font-size: 140px;
+    font-weight: 900;
+    color: #38bdf8;
+    line-height: 1;
+    position: relative;
+    user-select: none;
+    opacity: 0.15;
+}
+
+.nf-glitch {
+    font-size: 140px;
+    font-weight: 900;
+    color: #38bdf8;
+    line-height: 1;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    animation: glitch 3s infinite;
+}
+
+@keyframes glitch {
+    0%, 90%, 100% {
+        text-shadow: none;
+        transform: translate(0);
+        clip-path: none;
+    }
+    91% {
+        transform: translate(-4px, 2px);
+        text-shadow: 2px 0 #f87171;
+        clip-path: polygon(0 20%, 100% 20%, 100% 40%, 0 40%);
+    }
+    93% {
+        transform: translate(4px, -2px);
+        text-shadow: -2px 0 #818cf8;
+        clip-path: polygon(0 60%, 100% 60%, 100% 80%, 0 80%);
+    }
+    95% {
+        transform: translate(0);
+        clip-path: none;
+    }
+}
+
+.nf-content h2 {
+    font-size: 26px;
+    margin-bottom: 12px;
+    position: relative;
+}
+
+.nf-content p {
+    opacity: 0.55;
+    font-size: 15px;
+    line-height: 1.7;
+    margin-bottom: 32px;
+}
+
+.nf-btns {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.nf-home, .nf-back {
+    padding: 12px 28px;
+    border-radius: 10px;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.nf-home {
+    background: #38bdf8;
+    color: #0f172a;
+}
+
+.nf-home:hover { background: #7dd3fc; transform: translateY(-2px); }
+
+.nf-back {
+    background: rgba(255,255,255,0.07);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.15);
+}
+
+.nf-back:hover { background: rgba(255,255,255,0.12); transform: translateY(-2px); }
