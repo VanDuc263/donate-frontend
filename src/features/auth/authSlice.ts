@@ -1,39 +1,84 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import {getMe, login, loginWithGoogle} from './authApi'
+import { login, loginWithGoogle, getMe } from "./authApi";
+import { uploadAvatar } from "../user/userApi";
 
+/* =======================
+   TYPES
+======================= */
+interface User {
+    id?: number;
+    username: string;
+    email?: string;
+    avatar?: string;
+}
 
+interface AuthState {
+    user: User | null;
+    token: string | null;
+    loading: boolean;
+    error: string | null;
+}
+
+/* =======================
+   INIT STATE
+======================= */
+const initialState: AuthState = {
+    user: null,
+    token: localStorage.getItem("token"),
+    loading: false,
+    error: null,
+};
+
+/* =======================
+   LOGIN
+======================= */
 export const loginThunk = createAsyncThunk(
     "auth/login",
     async (data: { username: string; password: string }, thunkAPI) => {
         try {
-            const res = await login(data)
+            const res = await login(data);
+
             return {
                 token: res.data.token,
-                username: data.username
+                user: {
+                    username: data.username,
+                },
             };
-        } catch (err: any) {
+        } catch (err) {
             return thunkAPI.rejectWithValue("Sai tài khoản hoặc mật khẩu");
         }
     }
 );
+
+/* =======================
+   GOOGLE LOGIN
+======================= */
 export const loginGoogleThunk = createAsyncThunk(
     "auth/googleLogin",
     async (credential: string, thunkAPI) => {
         try {
             const res = await loginWithGoogle(credential);
-            console.log(res.data)
+
             return {
                 token: res.data.token,
-                username: res.data.username || "GoogleUser",
+                user: {
+                    username: res.data.username || "GoogleUser",
+                    email: res.data.email,
+                    avatar: res.data.avatar,
+                },
             };
-        } catch (err: any) {
+        } catch (err) {
             return thunkAPI.rejectWithValue("Google login thất bại");
         }
     }
 );
+
+/* =======================
+   GET ME
+======================= */
 export const meThunk = createAsyncThunk(
     "auth/me",
-    async (_:void, thunkAPI) => {
+    async (_, thunkAPI) => {
         try {
             const res = await getMe();
             return res.data;
@@ -43,14 +88,28 @@ export const meThunk = createAsyncThunk(
     }
 );
 
+/* =======================
+   UPLOAD AVATAR
+======================= */
+export const uploadAvatarThunk = createAsyncThunk(
+    "auth/uploadAvatar",
+    async (file: File, thunkAPI) => {
+        try {
+            const res = await uploadAvatar(file);
+            console.log(res.data)
+            return res.data;
+        } catch (err) {
+            return thunkAPI.rejectWithValue("Upload avatar thất bại");
+        }
+    }
+);
+
+/* =======================
+   SLICE
+======================= */
 const authSlice = createSlice({
     name: "auth",
-    initialState: {
-        user: null as any,
-        token: localStorage.getItem("token"),
-        loading: false,
-        error: null as string | null,
-    },
+    initialState,
     reducers: {
         logout: (state) => {
             state.user = null;
@@ -59,6 +118,8 @@ const authSlice = createSlice({
         },
     },
     extraReducers: (builder) => {
+
+        /* ===== LOGIN ===== */
         builder
             .addCase(loginThunk.pending, (state) => {
                 state.loading = true;
@@ -67,41 +128,51 @@ const authSlice = createSlice({
             .addCase(loginThunk.fulfilled, (state, action) => {
                 state.loading = false;
                 state.token = action.payload.token;
-                state.user = { username: action.payload.username };
+                state.user = action.payload.user;
 
                 localStorage.setItem("token", action.payload.token);
             })
             .addCase(loginThunk.rejected, (state, action: any) => {
                 state.loading = false;
                 state.error = action.payload;
-            })
-            .addCase(meThunk.pending, (state) => {
-                state.loading = true;
-            })
+            });
+
+        /* ===== GOOGLE LOGIN ===== */
+        builder
+            .addCase(loginGoogleThunk.fulfilled, (state, action) => {
+                state.token = action.payload.token;
+                state.user = action.payload.user;
+
+                localStorage.setItem("token", action.payload.token);
+            });
+
+        /* ===== GET ME ===== */
+        builder
             .addCase(meThunk.fulfilled, (state, action) => {
-                state.loading = false;
                 state.user = action.payload;
             })
             .addCase(meThunk.rejected, (state) => {
-                state.loading = false;
                 state.user = null;
                 state.token = null;
                 localStorage.removeItem("token");
-            })
-            .addCase(loginGoogleThunk.pending, (state) => {
+            });
+
+        builder
+            .addCase(uploadAvatarThunk.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(loginGoogleThunk.fulfilled, (state, action) => {
+            .addCase(uploadAvatarThunk.fulfilled, (state, action) => {
                 state.loading = false;
-                state.token = action.payload.token;
-                state.user = { username: action.payload.username };
-                localStorage.setItem("token", action.payload.token);
+                if (state.user) {
+                    state.user.avatar = action.payload;
+                }
             })
-            .addCase(loginGoogleThunk.rejected, (state, action: any) => {
+            .addCase(uploadAvatarThunk.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload;
+                state.error = action.payload as string;
             });
+
 
     },
 });

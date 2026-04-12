@@ -5,6 +5,9 @@ import { logout } from "../features/auth/authSlice";
 import { useState, useRef, useEffect } from "react";
 import Icon from "@mdi/react";
 import { mdiMagnify, mdiBellOutline, mdiPlusCircleOutline } from "@mdi/js";
+import {useAppSelector} from "../hooks/useAppSelector";
+
+
 
 const Header = () => {
     const navigate = useNavigate();
@@ -13,6 +16,9 @@ const Header = () => {
 
     const [open, setOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
+
+    const user = useAppSelector(state => state.auth.user)
+
 
     // đóng menu khi click ngoài
     useEffect(() => {
@@ -38,7 +44,6 @@ const Header = () => {
                 </nav>
             </div>
 
-            {/* RIGHT */}
             {!token ? (
                 <button className="btn-login" onClick={() => navigate("/login")}>
                     Đăng nhập
@@ -66,8 +71,9 @@ const Header = () => {
 
                     {/* Avatar */}
                     <div className="user-trigger" onClick={() => setOpen(!open)}>
-                        <img src="https://i.pravatar.cc/40" alt="" />
+                        <img src={user?.avatar} alt="" />
                     </div>
+
 
                     {/* Dropdown */}
                     {open && (
