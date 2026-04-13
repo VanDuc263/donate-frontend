@@ -1,10 +1,10 @@
 import {Link, useNavigate} from "react-router-dom";
 
 const streamers = [
-    { id:1,name: "MixiGaming", img: "https://i.pravatar.cc/150?img=1", money: "246M", rank: 1 },
-    { id:2,name: "Tabi", img: "https://i.pravatar.cc/150?img=2", money: "51M", rank: 2 },
-    { id:3,name: "Hướng Mêu", img: "https://i.pravatar.cc/150?img=3", money: "38M", rank: 3 },
-    { id:4,name: "Độ Mixi Clone", img: "https://i.pravatar.cc/150?img=4", money: "20M" },
+    { token:"mixigaming",name: "MixiGaming", img: "https://i.pravatar.cc/150?img=1", money: "246M", rank: 1 },
+    { token:"devnguyen",name: "Dev Nguyen", img: "https://i.pravatar.cc/150?img=2", money: "51M", rank: 2 },
+    { token:"",name: "Hướng Mêu", img: "https://i.pravatar.cc/150?img=3", money: "38M", rank: 3 },
+    { token:"",name: "Độ Mixi Clone", img: "https://i.pravatar.cc/150?img=4", money: "20M" },
 ];
 
 const Streamers = () => {
@@ -15,7 +15,7 @@ const Streamers = () => {
 
                 <div className="grid">
                     {streamers.map((s, i) => (
-                        <Link to={`/streamer/${s.id}`} className="card-link" key={s.id}>
+                        <Link to={`/streamer/${s.token}`} className="card-link" key={s.token}>
                             <div className="card">
                                 {s.rank && <span className="rank">#{s.rank}</span>}
                                 <img src={s.img} alt={s.name} />

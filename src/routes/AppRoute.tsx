@@ -6,7 +6,6 @@ import MainLayout from "../utils/MainLayout";
 import DonatePage from "../pages/DonatePage";
 import StreamerDetail from "../features/streamer/components/StreamerDetail";
 import Register from "../pages/Register";
-import Profile from "../pages/Profile";
 import Leaderboard from "../pages/Leaderboard";
 import Dashboard from "../pages/Dashboard";
 import NotFound from "../pages/NotFound";
@@ -43,10 +42,9 @@ const AppRoute = () => {
                 <Route path="/user/profile" element={<UserProfile/>}/>
 
                 {/* Detail streamer */}
-                <Route path="/streamer/:id" element={<StreamerDetail />} />
+                <Route path="/streamer/:token" element={<StreamerDetail />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             </Route>
 
             {/* ── Auth routes (no layout) ── */}
