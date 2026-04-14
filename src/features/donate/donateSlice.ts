@@ -1,5 +1,5 @@
 import {createSlice,createAsyncThunk} from "@reduxjs/toolkit";
-import {donate} from "./donateApi"
+import {donate, getTopDonor} from "./donateApi"
 
 export const donateThunk = createAsyncThunk(
         "donate/create",
@@ -16,4 +16,15 @@ export const donateThunk = createAsyncThunk(
         }
 
 )
+// export const getTopDonorThunk = createAsyncThunk(
+//     "donate/getTopDonor",
+//     async (token : string,thunkAPI) => {
+//         try {
+//             const res = await getTopDonor(token);
+//             return res.data;
+//         }catch (err : any){
+//             return thunkAPI.rejectWithValue("không tìm thấy donate cho stream này")
+//         }
+//     }
+// )
 

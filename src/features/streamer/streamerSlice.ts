@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { getStreamer } from "./streamerApi";
+import {getStreamer, getTopStreamer} from "./streamerApi";
 
 export const fetchStreamer = createAsyncThunk(
     "streamer/fetchStreamer",
@@ -13,14 +13,28 @@ export const fetchStreamer = createAsyncThunk(
     }
 );
 
+export const fetchTopStreamer = createAsyncThunk(
+    "streamer/fetchTopStreamer",
+    async (_,{rejectWithValue}) => {
+        try {
+            const res = await getTopStreamer();
+            return res.data;
+        }catch (err : any){
+            return rejectWithValue(err.response?.data || "Error");
+        }
+    }
+)
 interface StreamerState {
-    data: any;
+    streamerDetail: any;
+    topStreamers: any[];
     loading: boolean;
     error: any;
 }
 
+
 const initialState: StreamerState = {
-    data: null,
+    streamerDetail: null,
+    topStreamers: [],
     loading: false,
     error: null,
 };
@@ -30,10 +44,10 @@ const streamerSlice = createSlice({
     initialState,
     reducers: {
         increaseFollowers: (state) => {
-            if (state.data) state.data.followersCount += 1;
+            if (state.streamerDetail) state.streamerDetail.followersCount += 1;
         },
         decreaseFollowers: (state) => {
-            if (state.data) state.data.followersCount -= 1;
+            if (state.streamerDetail) state.streamerDetail.followersCount -= 1;
         },
     },
     extraReducers: (builder) => {
@@ -41,13 +55,26 @@ const streamerSlice = createSlice({
             .addCase(fetchStreamer.pending, (state) => {
                 state.loading = true;
                 state.error = null;
-                state.data = null;
+                state.streamerDetail = null;
             })
             .addCase(fetchStreamer.fulfilled, (state, action) => {
                 state.loading = false;
-                state.data = action.payload;
+                state.streamerDetail = action.payload;
             })
             .addCase(fetchStreamer.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            });
+        builder
+            .addCase(fetchTopStreamer.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchTopStreamer.fulfilled, (state, action) => {
+                state.loading = false;
+                state.topStreamers = action.payload;
+            })
+            .addCase(fetchTopStreamer.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });

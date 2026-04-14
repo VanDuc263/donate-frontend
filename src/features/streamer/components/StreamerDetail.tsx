@@ -5,6 +5,7 @@ import {useParams} from "react-router-dom";
 import {useDispatch, useSelector} from "react-redux";
 import {AppDispatch} from "../../../app/store";
 import {fetchStreamer} from "../streamerSlice";
+import {getTopDonor} from "../../donate/donateApi";
 
 const donations = [
     { name: "Giấu tên", amount: "10.000 VND", time: "3 ngày trước" },
@@ -27,9 +28,29 @@ const StreamerDetail = () => {
         }
     }, [token]);
 
-    const { data, loading } = useSelector((state: any) => state.streamer);
+    const [topDonors, setTopDonors] = useState([]);
+    const [loadingDonors, setLoadingDonors] = useState(false);
 
-    console.log(data)
+    useEffect(() => {
+        if (!token) return;
+
+        dispatch(fetchStreamer(token));
+
+        const fetchTopDonor = async () => {
+            setLoadingDonors(true);
+            try {
+                const res = await getTopDonor(token);
+                setTopDonors(res.data);
+            } finally {
+                setLoadingDonors(false);
+            }
+        };
+
+        fetchTopDonor();
+    }, [token]);
+
+    const { streamerDetail, loading } = useSelector((state: any) => state.streamer);
+
 
     return (
         <div className="streamer-page">
@@ -43,10 +64,10 @@ const StreamerDetail = () => {
                             <p>Loading...</p>
                         ) : (
                             <>
-                                <img src={data?.avatar || data?.user?.avatar} alt="avatar" />
+                                <img src={streamerDetail?.avatar || streamerDetail?.user?.avatar} alt="avatar" />
                                 <div>
-                                    <h2>{data?.displayName}</h2>
-                                    <p>{data?.followersCount || 0} followers</p>
+                                    <h2>{streamerDetail?.displayName}</h2>
+                                    <p>{streamerDetail?.followersCount || 0} followers</p>
                                 </div>
                             </>
                         )}
@@ -78,13 +99,17 @@ const StreamerDetail = () => {
                             <h3>🏆 Top Donator</h3>
 
                             <div className="donator-list">
-                                {donations.map((d, i) => (
-                                    <div key={i} className="donator-item">
-                                        <span className="donator-rank">#{i + 1}</span>
-                                        <span className="name">{d.name}</span>
-                                        <span className="amount">{d.amount}</span>
-                                    </div>
-                                ))}
+                                {loadingDonors ? (
+                                    <p>Loading...</p>
+                                ) : (
+                                    topDonors.map((d: any, i: number) => (
+                                        <div key={i} className="donator-item">
+                                            <span className="donator-rank">#{i + 1}</span>
+                                            <span className="name">{d.donorName}</span>
+                                            <span className="amount">{d.totalAmount} VND</span>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         </div>
                     </div>

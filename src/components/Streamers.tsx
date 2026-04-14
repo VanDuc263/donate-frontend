@@ -1,26 +1,33 @@
 import {Link, useNavigate} from "react-router-dom";
+import {useEffect} from "react";
+import {fetchTopStreamer} from "../features/streamer/streamerSlice";
+import {useDispatch, useSelector} from "react-redux";
+import {AppDispatch} from "../app/store";
 
-const streamers = [
-    { token:"mixigaming",name: "MixiGaming", img: "https://i.pravatar.cc/150?img=1", money: "246M", rank: 1 },
-    { token:"devnguyen",name: "Dev Nguyen", img: "https://i.pravatar.cc/150?img=2", money: "51M", rank: 2 },
-    { token:"",name: "Hướng Mêu", img: "https://i.pravatar.cc/150?img=3", money: "38M", rank: 3 },
-    { token:"",name: "Độ Mixi Clone", img: "https://i.pravatar.cc/150?img=4", money: "20M" },
-];
+
 
 const Streamers = () => {
+    const dispatch = useDispatch<AppDispatch>();
+    useEffect(() => {
+        dispatch(fetchTopStreamer());
+    }, [dispatch]);
+
+    const { topStreamers, loading } = useSelector((state: any) => state.streamer);
+
+
     return (
         <div>
             <section className="streamers">
                 <h2>🔥 Top Streamers</h2>
 
                 <div className="grid">
-                    {streamers.map((s, i) => (
-                        <Link to={`/streamer/${s.token}`} className="card-link" key={s.token}>
+                    {topStreamers.map((s: any, i: number) => (
+                        <Link to={`/streamer/${s.token}`} key={s.id}>
                             <div className="card">
-                                {s.rank && <span className="rank">#{s.rank}</span>}
-                                <img src={s.img} alt={s.name} />
-                                <h3>{s.name}</h3>
-                                <p className="money">{s.money} VNĐ</p>
+                                <span className="rank">#{i + 1}</span>
+                                <img src={s.avatar} alt={s.displayName} />
+                                <h3>{s.displayName}</h3>
+                                <p className="money">{s.totalAmount}.000 VNĐ</p>
                             </div>
                         </Link>
                     ))}
