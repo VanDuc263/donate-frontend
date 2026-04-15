@@ -1,70 +1,110 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import "../../../styles/streamer_detail.css";
 import DonateForm from "../../donate/components/DonateForm";
-import {useParams} from "react-router-dom";
-import {useDispatch, useSelector} from "react-redux";
-import {AppDispatch} from "../../../app/store";
-import {fetchStreamer} from "../streamerSlice";
-import {getTopDonor} from "../../donate/donateApi";
-
-const donations = [
-    { name: "Giấu tên", amount: "10.000 VND", time: "3 ngày trước" },
-    { name: "Merlin", amount: "5.000 VND", time: "4 ngày trước" },
-    { name: "Zeno", amount: "10.000 VND", time: "4 ngày trước" },
-    { name: "Zeno", amount: "10.000 VND", time: "4 ngày trước" },
-    { name: "Zeno", amount: "10.000 VND", time: "4 ngày trước" },
-    { name: "Zeno", amount: "10.000 VND", time: "4 ngày trước" },
-    { name: "Zeno", amount: "10.000 VND", time: "4 ngày trước" },
-];
+import { useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch } from "../../../app/store";
+import { fetchStreamer } from "../streamerSlice";
+import { getLatestDonations, getTopDonor } from "../../donate/donateApi";
+import { connectSocket } from "../../../services/socket";
+import { addDonateRealtime, setDonations } from "../../donate/donateSlice";
 
 const StreamerDetail = () => {
-    const [showDonate,setShowDonate] = useState(false);
-    const {token} = useParams();
-    const dispatch = useDispatch<AppDispatch>()
+    const { token } = useParams();
+    const dispatch = useDispatch<AppDispatch>();
 
-    useEffect(() => {
-        if(token){
-            dispatch(fetchStreamer(token))
-        }
-    }, [token]);
+    const { streamerDetail, loading } = useSelector(
+        (state: any) => state.streamer
+    );
 
-    const [topDonors, setTopDonors] = useState([]);
+    const donations = useSelector((state: any) => state.donate.donations);
+
+    const [showDonate, setShowDonate] = useState(false);
+    const [topDonors, setTopDonors] = useState<any[]>([]);
     const [loadingDonors, setLoadingDonors] = useState(false);
 
+    // ================= STREAMER LOAD =================
     useEffect(() => {
         if (!token) return;
 
         dispatch(fetchStreamer(token));
 
-        const fetchTopDonor = async () => {
+        let ignore = false;
+
+        const fetchTopDonors = async () => {
             setLoadingDonors(true);
             try {
                 const res = await getTopDonor(token);
-                setTopDonors(res.data);
+                if (!ignore) setTopDonors(res.data);
             } finally {
-                setLoadingDonors(false);
+                if (!ignore) setLoadingDonors(false);
             }
         };
 
-        fetchTopDonor();
-    }, [token]);
+        fetchTopDonors();
 
-    const { streamerDetail, loading } = useSelector((state: any) => state.streamer);
+        return () => {
+            ignore = true;
+        };
+    }, [token, dispatch]);
 
+    // ================= DONATION HISTORY =================
+    useEffect(() => {
+        if (!streamerDetail?.streamerId) return;
+
+        const fetchDonations = async () => {
+            const res = await getLatestDonations(streamerDetail.streamerId);
+            dispatch(setDonations(res.data));
+        };
+
+        fetchDonations();
+    }, [streamerDetail?.streamerId, dispatch]);
+
+    // ================= SOCKET (CHỈ UPDATE LIST) =================
+    useEffect(() => {
+        if (!streamerDetail?.streamerId) return;
+
+        const disconnect = connectSocket(
+            streamerDetail.streamerId,
+            (data) => {
+                console.log("🔥 realtime donate:", data);
+
+                // chỉ update list, KHÔNG show overlay
+                dispatch(addDonateRealtime(data));
+            }
+        );
+
+        return () => disconnect();
+    }, [streamerDetail?.streamerId, dispatch]);
+
+    // ================= UI =================
+    const openDonate = useCallback(() => {
+        setShowDonate(true);
+    }, []);
+
+    const closeDonate = useCallback(() => {
+        setShowDonate(false);
+    }, []);
 
     return (
         <div className="streamer-page">
-            {/* Cover */}
+
+            {/* HEADER */}
             <div className="cover">
                 <div className="overlay">
 
-                    {/* Profile */}
                     <div className="profile">
                         {loading ? (
                             <p>Loading...</p>
                         ) : (
                             <>
-                                <img src={streamerDetail?.avatar || streamerDetail?.user?.avatar} alt="avatar" />
+                                <img
+                                    src={
+                                        streamerDetail?.avatar ||
+                                        streamerDetail?.user?.avatar
+                                    }
+                                    alt="avatar"
+                                />
                                 <div>
                                     <h2>{streamerDetail?.displayName}</h2>
                                     <p>{streamerDetail?.followersCount || 0} followers</p>
@@ -73,9 +113,10 @@ const StreamerDetail = () => {
                         )}
                     </div>
 
-                    {/* Actions */}
                     <div className="actions">
-                        <button onClick={() => setShowDonate(true)} className="donate-btn">Donate</button>
+                        <button onClick={openDonate} className="donate-btn">
+                            Donate
+                        </button>
                         <button>Theo dõi</button>
                         <button>Chia sẻ</button>
                     </div>
@@ -83,70 +124,68 @@ const StreamerDetail = () => {
                 </div>
             </div>
 
-            {/* Main */}
+            {/* CONTENT */}
             <div className="content">
                 <div className="content-wrapper">
 
+                    {/* LEFT */}
                     <div className="left">
-                        {/* QR */}
+
                         <div className="qr-box">
                             <p>Quét mã để donate</p>
                             <img src="/images/pay1.png" alt="QR" />
                         </div>
 
-                        {/* TOP DONATOR */}
                         <div className="top-donator">
                             <h3>🏆 Top Donator</h3>
 
-                            <div className="donator-list">
-                                {loadingDonors ? (
-                                    <p>Loading...</p>
-                                ) : (
-                                    topDonors.map((d: any, i: number) => (
-                                        <div key={i} className="donator-item">
-                                            <span className="donator-rank">#{i + 1}</span>
-                                            <span className="name">{d.donorName}</span>
-                                            <span className="amount">{d.totalAmount} VND</span>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
+                            {loadingDonors ? (
+                                <p>Loading...</p>
+                            ) : (
+                                topDonors.map((d, i) => (
+                                    <div key={i} className="donator-item">
+                                        <span>#{i + 1}</span>
+                                        <span>{d.donorName}</span>
+                                        <span>{d.totalAmount} VND</span>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
 
-
                     {/* RIGHT */}
                     <div className="right">
-                        {/* Donate CTA */}
+
                         <div className="donate-banner">
                             <span>Bạn yêu thích streamer này?</span>
-                            <button onClick={() => setShowDonate(true)}>
+                            <button onClick={openDonate}>
                                 DONATE NGAY
                             </button>
                         </div>
 
-                        {/* FORM */}
                         {showDonate && (
-                            <DonateForm onClose={() => setShowDonate(false)} />
+                            <DonateForm onClose={closeDonate} />
                         )}
 
-                        {/* Feed */}
                         <div className="donation-feed">
-                            {donations.map((d, i) => (
+                            {donations.map((d: any, i: number) => (
                                 <div key={i} className="donation-item">
-                                    <div className="dot"></div>
+                                    <div className="dot" />
                                     <div>
-                                        <p className="name">{d.name}</p>
-                                        <p className="info">
-                                            Donate {d.amount} • {d.time}
+                                        <p>{d.donorName}</p>
+                                        <p>
+                                            Donate {d.amount} • vừa xong
                                         </p>
                                     </div>
                                 </div>
                             ))}
                         </div>
+
                     </div>
                 </div>
-            </div>        </div>
+            </div>
+
+        </div>
     );
 };
 

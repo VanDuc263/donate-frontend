@@ -1,5 +1,8 @@
 import { useState } from "react";
 import "../../../styles/donate_form.css"
+import {donateThunk} from "../donateSlice";
+import {useDispatch} from "react-redux";
+import {AppDispatch} from "../../../app/store";
 
 
 type DonateModalProps = {
@@ -11,17 +14,18 @@ type TabType = "wallet" | "qr" ;
 export default function DonateModal({ onClose }: DonateModalProps) {
     const [tab, setTab] = useState<TabType>("wallet");
 
+
+
+
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-container" onClick={(e) => e.stopPropagation()}>
 
-                {/* HEADER */}
                 <div className="modal-header">
                     <h2>Donate</h2>
                     <button onClick={onClose}>X</button>
                 </div>
 
-                {/* TABS */}
                 <div className="modal-tabs">
                     <button
                         className={tab === "wallet" ? "active" : ""}
@@ -38,7 +42,6 @@ export default function DonateModal({ onClose }: DonateModalProps) {
 
                 </div>
 
-                {/* CONTENT */}
                 <div className="modal-content">
                     {tab === "wallet" && <WalletTab />}
                     {tab === "qr" && <QRTab />}
@@ -50,8 +53,19 @@ export default function DonateModal({ onClose }: DonateModalProps) {
 }
 
 function WalletTab() {
+
+    const dispatch = useDispatch<AppDispatch>();
+
     const [amount, setAmount] = useState<number>(0);
     const [message, setMessage] = useState("");
+
+    const handleDonate = () => {
+        dispatch(   donateThunk({
+            amount,
+            message,
+            streamerId: 1
+        }));
+    };
 
     return (
         <div>
@@ -73,7 +87,7 @@ function WalletTab() {
                     onChange={(e) => setMessage(e.target.value)}
                 />
 
-                <button>Donate</button>
+                <button onClick={handleDonate}>Donate</button>
             </div>
         </div>
     );

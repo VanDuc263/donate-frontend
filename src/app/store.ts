@@ -6,11 +6,13 @@ import leaderboardReducer from "../features/leaderboard/leaderboardSlice";
 import dashboardReducer from "../features/dashboard/dashboardSlice";
 import adminReducer from "../features/admin/adminSlice";
 import streamerReducer from "../features/streamer/streamerSlice"
+import donateReducer from "../features/donate/donateSlice"
 
 export const store = configureStore({
     reducer: {
         auth: authReducer,
         streamer : streamerReducer,
+        donate: donateReducer,
         profile: profileReducer,
         register: registerReducer,
         leaderboard: leaderboardReducer,

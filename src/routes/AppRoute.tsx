@@ -20,6 +20,7 @@ import AdminLayout from "../admin/AdminLayout";
 import UserProfile from "../pages/UserProfile";
 import {useSelector} from "react-redux";
 import {RootState} from "../app/store";
+import DonateOverlayPage from "../components/DonateOverlayPage";
 
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -50,6 +51,7 @@ const AppRoute = () => {
             {/* ── Auth routes (no layout) ── */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/overlay/:streamerId" element={<DonateOverlayPage />} />
 
             {/* ── Admin routes (AdminLayout with sidebar) ── */}
             <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
