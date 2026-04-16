@@ -6,6 +6,10 @@ export const donate = (data: any) => {
 export const getTopDonor = (token: string) => {
     return axiosClient.get(`/api/donate/${token}`);
 };
-export const getLatestDonations = (streamerId: number) => {
+export const getLatestDonationsByStreamerId = (streamerId: number) => {
     return axiosClient.get(`/api/donate/${streamerId}/donations?limit=10`);
 };
+
+export const getLatestDonation = () => {
+    return axiosClient.get("/api/donate/top")
+}

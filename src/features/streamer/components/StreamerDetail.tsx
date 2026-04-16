@@ -5,7 +5,7 @@ import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "../../../app/store";
 import { fetchStreamer } from "../streamerSlice";
-import { getLatestDonations, getTopDonor } from "../../donate/donateApi";
+import { getLatestDonationsByStreamerId, getTopDonor } from "../../donate/donateApi";
 import { connectSocket } from "../../../services/socket";
 import { addDonateRealtime, setDonations } from "../../donate/donateSlice";
 
@@ -53,7 +53,7 @@ const StreamerDetail = () => {
         if (!streamerDetail?.streamerId) return;
 
         const fetchDonations = async () => {
-            const res = await getLatestDonations(streamerDetail.streamerId);
+            const res = await getLatestDonationsByStreamerId(streamerDetail.streamerId);
             dispatch(setDonations(res.data));
         };
 
@@ -69,7 +69,6 @@ const StreamerDetail = () => {
             (data) => {
                 console.log("🔥 realtime donate:", data);
 
-                // chỉ update list, KHÔNG show overlay
                 dispatch(addDonateRealtime(data));
             }
         );

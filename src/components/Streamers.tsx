@@ -5,6 +5,20 @@ import {useDispatch, useSelector} from "react-redux";
 import {AppDispatch} from "../app/store";
 
 
+const convertAmount = (amount: number): string => {
+    if (amount < 1000) return amount.toString();
+
+    if (amount < 1_000_000) {
+        return (amount / 1000).toFixed(1).replace('.0', '') + 'K';
+    }
+
+    if (amount < 1_000_000_000) {
+        return (amount / 1_000_000).toFixed(1).replace('.0', '') + 'M';
+    }
+
+    return (amount / 1_000_000_000).toFixed(1).replace('.0', '') + 'B';
+};
+
 
 const Streamers = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -13,6 +27,9 @@ const Streamers = () => {
     }, [dispatch]);
 
     const { topStreamers, loading } = useSelector((state: any) => state.streamer);
+
+
+
 
 
     return (
@@ -27,7 +44,7 @@ const Streamers = () => {
                                 <span className="rank">#{i + 1}</span>
                                 <img src={s.avatar} alt={s.displayName} />
                                 <h3>{s.displayName}</h3>
-                                <p className="money">{s.totalAmount}.000 VNĐ</p>
+                                <p className="money">{convertAmount(s.totalAmount)} VNĐ</p>
                             </div>
                         </Link>
                     ))}

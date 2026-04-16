@@ -80,9 +80,9 @@ const Header = () => {
                         <div className="dropdown-menu">
                             <p className="dropdown-name">Đức Văn</p>
 
-                            <Link to="/user/profile">Thông tin</Link>
-                            <Link to="/user/payment_order">Lịch sử donate</Link>
-                            <Link to="/user/follow">Theo dõi</Link>
+                            <Link to="/account/profile">Thông tin</Link>
+                            <Link to="/account/payment_order">Lịch sử donate</Link>
+                            <Link to="/account/follow">Theo dõi</Link>
 
                             <hr />
 

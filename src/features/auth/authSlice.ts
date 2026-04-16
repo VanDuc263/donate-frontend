@@ -8,6 +8,8 @@ import { uploadAvatar } from "../user/userApi";
 interface User {
     id?: number;
     username: string;
+    fullName? : string;
+    role? : string;
     email?: string;
     avatar?: string;
 }

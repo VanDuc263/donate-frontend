@@ -9,7 +9,6 @@ import Register from "../pages/Register";
 import Leaderboard from "../pages/Leaderboard";
 import Dashboard from "../pages/Dashboard";
 import NotFound from "../pages/NotFound";
-
 import AdminOverview from "../admin/pages/AdminOverview";
 import AdminUsers from "../admin/pages/AdminUsers";
 import AdminStreamers from "../admin/pages/AdminStreamers";
@@ -21,6 +20,7 @@ import UserProfile from "../pages/UserProfile";
 import {useSelector} from "react-redux";
 import {RootState} from "../app/store";
 import DonateOverlayPage from "../components/DonateOverlayPage";
+import CreateDonatePage from "../components/profile/CreateDonatePage";
 
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -40,7 +40,10 @@ const AppRoute = () => {
                 <Route path="/" element={<Home />} />
                 <Route path="/donate" element={<DonatePage />} />
 
-                <Route path="/user/profile" element={<UserProfile/>}/>
+                <Route path="/account/profile" element={<UserProfile/>}/>
+                <Route path="/account/create-streamer" element={<CreateDonatePage/>}/>
+                <Route path="/account/donations" element={<CreateDonatePage/>}/>
+                <Route path="/account/following" element={<CreateDonatePage/>}/>
 
                 {/* Detail streamer */}
                 <Route path="/streamer/:token" element={<StreamerDetail />} />

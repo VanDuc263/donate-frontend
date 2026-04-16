@@ -4,7 +4,7 @@ const Hero = () => (
         <p>Tạo trang donate miễn phí - nhận tiền trực tiếp - không trung gian</p>
 
         <div className="hero-input">
-            <input placeholder="zyscan.com/your-name" />
+            <input placeholder="your-page" />
             <button>Tạo ngay</button>
         </div>
     </section>

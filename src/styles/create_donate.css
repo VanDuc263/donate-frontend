@@ -1,0 +1,73 @@
+
+
+/* upload avatar */
+.upload-box {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    margin: 0 auto 20px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #020617;
+    border: 2px dashed rgba(255,255,255,0.2);
+
+    cursor: pointer;
+    overflow: hidden;
+    transition: 0.2s;
+}
+
+.upload-box:hover {
+    border-color: #38bdf8;
+}
+
+.upload-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.upload-placeholder {
+    font-size: 24px;
+    opacity: 0.3;
+}
+
+/* input prefix (taziu.com/slug) */
+.input-prefix {
+    display: flex;
+    align-items: center;
+
+    background: #020617;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.05);
+    overflow: hidden;
+}
+
+.input-prefix span {
+    padding: 10px 0 10px 10px;
+    font-size: 13px;
+    opacity: 0.6;
+}
+
+.input-prefix input {
+    border: none;
+    outline: none;
+    background: transparent;
+    color: white;
+    flex: 1;
+    padding: 10px 10px 10px 0;
+}
+
+/* select giống input */
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+
+    background: #020617;
+    color: white;
+
+    border: 1px solid rgba(255,255,255,0.05);
+}

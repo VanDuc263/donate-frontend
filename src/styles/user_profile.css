@@ -40,6 +40,9 @@
     font-size: 12px;
     opacity: 0.5;
     margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .profile-menu a {
@@ -49,6 +52,7 @@
     color: white;
     opacity: 0.8;
     transition: 0.2s;
+    font-size: 14px;
 }
 
 .profile-menu a:hover {
@@ -197,4 +201,46 @@
 
 .avatar-upload:hover .overlay {
     opacity: 1;
+}
+.menu-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 10px;
+    border-radius: 8px;
+
+    color: white;
+    opacity: 0.8;
+}
+
+/* hover giống menu */
+.menu-item:hover {
+    background: #1e293b;
+}
+
+/* badge "chưa có liên kết" */
+.badge {
+    background: #2a2d35;
+    color: #ccc;
+
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* link "+ Tạo Trang ZyScan" */
+.profile-menu a:nth-of-type(4) {
+    font-weight: 500;
+}
+
+/* divider đẹp hơn */
+.profile-menu hr {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    margin: 10px 0;
 }
