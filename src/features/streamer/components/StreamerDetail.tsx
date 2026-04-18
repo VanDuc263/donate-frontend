@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import "../../../styles/streamer_detail.css";
 import DonateForm from "../../donate/components/DonateForm";
 import { useParams } from "react-router-dom";
@@ -23,15 +23,36 @@ const StreamerDetail = () => {
     const [topDonors, setTopDonors] = useState<any[]>([]);
     const [loadingDonors, setLoadingDonors] = useState(false);
 
-    // ================= STREAMER LOAD =================
+    // ================= VERSION CONTROL (QUAN TRỌNG NHẤT) =================
+    const activeStreamerIdRef = useRef<number | null>(null);
+    const socketRef = useRef<any>(null);
+
+    // ================= RESET ON TOKEN CHANGE =================
+    useEffect(() => {
+        dispatch(setDonations([]));
+        setTopDonors([]);
+        activeStreamerIdRef.current = null;
+
+        // disconnect socket cũ ngay lập tức
+        if (socketRef.current) {
+            socketRef.current();
+            socketRef.current = null;
+        }
+    }, [token, dispatch]);
+
+    // ================= LOAD STREAMER =================
+    useEffect(() => {
+        if (!token) return;
+        dispatch(fetchStreamer(token));
+    }, [token, dispatch]);
+
+    // ================= LOAD TOP DONORS (ANTI RACE) =================
     useEffect(() => {
         if (!token) return;
 
-        dispatch(fetchStreamer(token));
-
         let ignore = false;
 
-        const fetchTopDonors = async () => {
+        (async () => {
             setLoadingDonors(true);
             try {
                 const res = await getTopDonor(token);
@@ -39,56 +60,65 @@ const StreamerDetail = () => {
             } finally {
                 if (!ignore) setLoadingDonors(false);
             }
-        };
-
-        fetchTopDonors();
+        })();
 
         return () => {
             ignore = true;
         };
-    }, [token, dispatch]);
+    }, [token]);
 
-    // ================= DONATION HISTORY =================
+    // ================= LOAD DONATIONS (ANTI OLD RESPONSE) =================
     useEffect(() => {
         if (!streamerDetail?.streamerId) return;
 
+        const currentId = streamerDetail.streamerId;
+        activeStreamerIdRef.current = currentId;
+
         const fetchDonations = async () => {
-            const res = await getLatestDonationsByStreamerId(streamerDetail.streamerId);
+            const res = await getLatestDonationsByStreamerId(currentId);
+
+            // ❗ CHẶN DATA CŨ
+            if (activeStreamerIdRef.current !== currentId) return;
+
             dispatch(setDonations(res.data));
         };
 
         fetchDonations();
     }, [streamerDetail?.streamerId, dispatch]);
 
-    // ================= SOCKET (CHỈ UPDATE LIST) =================
+    // ================= SOCKET (ANTI OLD CALLBACK) =================
     useEffect(() => {
         if (!streamerDetail?.streamerId) return;
 
-        const disconnect = connectSocket(
-            streamerDetail.streamerId,
-            (data) => {
-                console.log("🔥 realtime donate:", data);
+        const id = streamerDetail.streamerId;
+        activeStreamerIdRef.current = id;
 
-                dispatch(addDonateRealtime(data));
-            }
-        );
+        const disconnect = connectSocket(id, (data) => {
+            // ❗ CHẶN SOCKET CŨ
+            if (activeStreamerIdRef.current !== id) return;
 
-        return () => disconnect();
+            dispatch(addDonateRealtime(data));
+            setTopDonors(data.topDonors || []);
+        });
+
+        socketRef.current = disconnect;
+
+        return () => {
+            disconnect();
+        };
     }, [streamerDetail?.streamerId, dispatch]);
 
-    // ================= UI =================
-    const openDonate = useCallback(() => {
-        setShowDonate(true);
-    }, []);
+    const convertAmount = (amount : number ) => {
+        
+    }
 
-    const closeDonate = useCallback(() => {
-        setShowDonate(false);
-    }, []);
+    // ================= UI =================
+    const openDonate = useCallback(() => setShowDonate(true), []);
+    const closeDonate = useCallback(() => setShowDonate(false), []);
 
     return (
         <div className="streamer-page">
 
-            {/* HEADER */}
             <div className="cover">
                 <div className="overlay">
 
@@ -123,13 +153,10 @@ const StreamerDetail = () => {
                 </div>
             </div>
 
-            {/* CONTENT */}
             <div className="content">
                 <div className="content-wrapper">
 
-                    {/* LEFT */}
                     <div className="left">
-
                         <div className="qr-box">
                             <p>Quét mã để donate</p>
                             <img src="/images/pay1.png" alt="QR" />
@@ -152,7 +179,6 @@ const StreamerDetail = () => {
                         </div>
                     </div>
 
-                    {/* RIGHT */}
                     <div className="right">
 
                         <div className="donate-banner">
@@ -172,9 +198,7 @@ const StreamerDetail = () => {
                                     <div className="dot" />
                                     <div>
                                         <p>{d.donorName}</p>
-                                        <p>
-                                            Donate {d.amount} • vừa xong
-                                        </p>
+                                        <p>Donate {d.amount} • vừa xong</p>
                                     </div>
                                 </div>
                             ))}

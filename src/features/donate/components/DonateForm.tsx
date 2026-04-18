@@ -1,8 +1,8 @@
 import { useState } from "react";
 import "../../../styles/donate_form.css"
 import {donateThunk} from "../donateSlice";
-import {useDispatch} from "react-redux";
-import {AppDispatch} from "../../../app/store";
+import {useDispatch, useSelector} from "react-redux";
+import {AppDispatch, RootState} from "../../../app/store";
 
 
 type DonateModalProps = {
@@ -59,11 +59,18 @@ function WalletTab() {
     const [amount, setAmount] = useState<number>(0);
     const [message, setMessage] = useState("");
 
+    const user = useSelector((state : RootState) => state.auth.user)
+    const streamer =  useSelector((state : RootState) => state.streamer.streamerDetail)
+
+    console.log(user)
+
     const handleDonate = () => {
         dispatch(   donateThunk({
+            donorName : user?.fullName,
+            donorId : user?.userId,
             amount,
             message,
-            streamerId: 1
+            streamerId: streamer.streamerId
         }));
     };
 

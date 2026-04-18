@@ -5,7 +5,6 @@ const UserMenu = () => {
     const navigate = useNavigate();
 
     const handleLogout = () => {
-        // TODO: dispatch logout nếu có redux
         navigate("/login");
     };
 

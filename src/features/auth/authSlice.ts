@@ -1,12 +1,13 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { login, loginWithGoogle, getMe } from "./authApi";
 import { uploadAvatar } from "../user/userApi";
+import {CreateStreamerThunk} from "../streamer/streamerSlice";
 
 /* =======================
    TYPES
 ======================= */
 interface User {
-    id?: number;
+    userId?: number;
     username: string;
     fullName? : string;
     role? : string;
@@ -16,6 +17,7 @@ interface User {
 
 interface AuthState {
     user: User | null;
+    streamer : any | null;
     token: string | null;
     loading: boolean;
     error: string | null;
@@ -26,6 +28,7 @@ interface AuthState {
 ======================= */
 const initialState: AuthState = {
     user: null,
+    streamer : null,
     token: localStorage.getItem("token"),
     loading: false,
     error: null,
@@ -42,9 +45,7 @@ export const loginThunk = createAsyncThunk(
 
             return {
                 token: res.data.token,
-                user: {
-                    username: data.username,
-                },
+                user: res.data.user
             };
         } catch (err) {
             return thunkAPI.rejectWithValue("Sai tài khoản hoặc mật khẩu");
@@ -61,13 +62,11 @@ export const loginGoogleThunk = createAsyncThunk(
         try {
             const res = await loginWithGoogle(credential);
 
+            console.log(res)
             return {
                 token: res.data.token,
-                user: {
-                    username: res.data.username || "GoogleUser",
-                    email: res.data.email,
-                    avatar: res.data.avatar,
-                },
+                user: res.data.user,
+                streamer : res.data.streamer
             };
         } catch (err) {
             return thunkAPI.rejectWithValue("Google login thất bại");
@@ -75,15 +74,15 @@ export const loginGoogleThunk = createAsyncThunk(
     }
 );
 
-/* =======================
-   GET ME
-======================= */
 export const meThunk = createAsyncThunk(
     "auth/me",
     async (_, thunkAPI) => {
         try {
             const res = await getMe();
-            return res.data;
+            return {
+                user: res.data.user,
+                streamer : res.data.streamer
+            };
         } catch (err) {
             return thunkAPI.rejectWithValue("Token không hợp lệ");
         }
@@ -144,6 +143,7 @@ const authSlice = createSlice({
             .addCase(loginGoogleThunk.fulfilled, (state, action) => {
                 state.token = action.payload.token;
                 state.user = action.payload.user;
+                state.streamer = action.payload.streamer;
 
                 localStorage.setItem("token", action.payload.token);
             });
@@ -151,7 +151,8 @@ const authSlice = createSlice({
         /* ===== GET ME ===== */
         builder
             .addCase(meThunk.fulfilled, (state, action) => {
-                state.user = action.payload;
+                state.user = action.payload.user;
+                state.streamer = action.payload.streamer;
             })
             .addCase(meThunk.rejected, (state) => {
                 state.user = null;
@@ -174,7 +175,14 @@ const authSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload as string;
             });
+        builder
+            .addCase(CreateStreamerThunk.fulfilled, (state, action) => {
+                state.token = action.payload.token;
+                state.user = action.payload.userResponse;
 
+                localStorage.setItem("token", action.payload.token);
+                // localStorage.setItem("refreshToken", action.payload.refreshToken);
+            });
 
     },
 });

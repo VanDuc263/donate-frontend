@@ -1,5 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import {getStreamer, getTopStreamer} from "./streamerApi";
+import {createStreamer, getStreamer, getTopStreamer} from "./streamerApi";
+
+export interface StreamerInfo {
+    displayName : string,
+    token : string,
+    type : string,
+    file : File
+}
 
 export const fetchStreamer = createAsyncThunk(
     "streamer/fetchStreamer",
@@ -22,6 +29,17 @@ export const fetchTopStreamer = createAsyncThunk(
         }catch (err : any){
             return rejectWithValue(err.response?.data || "Error");
         }
+    }
+)
+export const CreateStreamerThunk = createAsyncThunk(
+    "streamer/create",
+    async (data : StreamerInfo,{rejectWithValue}) => {
+        try {
+            const res = await createStreamer(data);
+            return res.data;
+        }catch (err : any){
+        return rejectWithValue(err.response?.data || "Error");
+    }
     }
 )
 interface StreamerState {

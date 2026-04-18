@@ -4,21 +4,18 @@ import Feed from "../components/Feed";
 import Partners from "../components/Partners";
 import Footer from "../components/Footer";
 import {useAppSelector} from "../hooks/useAppSelector";
-import {useEffect} from "react";
+import FeedPage from "../components/FeedPage";
 
 
 const Home = () => {
 
-    const user = useAppSelector(state => state.auth.user)
 
-    useEffect(() => {
-        console.log("user :", user);
-    }, [user]);
+
     return (
         <>
             <Hero />
             <Streamers />
-            <Feed />
+            <FeedPage />
             <Partners />
             <Footer />
         </>

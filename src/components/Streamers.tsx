@@ -35,7 +35,7 @@ const Streamers = () => {
     return (
         <div>
             <section className="streamers">
-                <h2>🔥 Top Streamers</h2>
+                <h2>Top Streamers</h2>
 
                 <div className="grid">
                     {topStreamers.map((s: any, i: number) => (

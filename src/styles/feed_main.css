@@ -1,0 +1,66 @@
+.feed-layout {
+    display: grid;
+    grid-template-columns: 2.5fr 1fr;
+    gap: 25px;
+    padding: 60px 10%;
+}
+
+/* FEED */
+.feed-main {
+    width: 100%;
+}
+
+/* SIDEBAR */
+.feed-sidebar {
+    position: sticky;
+    top: 100px;
+
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 20px;
+
+    height: fit-content;
+    backdrop-filter: blur(12px);
+}
+.top-donors h3 {
+    margin-bottom: 15px;
+    color: #38bdf8;
+}
+
+/* ITEM */
+.donor-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 10px;
+    border-radius: 10px;
+
+    background: rgba(255,255,255,0.04);
+    margin-bottom: 8px;
+
+    transition: 0.2s;
+}
+
+.donor-item:hover {
+    background: rgba(56,189,248,0.1);
+}
+
+/* RANK */
+.rank {
+    font-weight: bold;
+    color: gold;
+}
+
+/* NAME */
+.name {
+    flex: 1;
+    margin-left: 10px;
+}
+
+/* MONEY */
+.money {
+    color: #22c55e;
+    font-weight: 600;
+}

@@ -4,7 +4,7 @@ export const donate = (data: any) => {
     return axiosClient.post("/api/donate/create", data);
 };
 export const getTopDonor = (token: string) => {
-    return axiosClient.get(`/api/donate/${token}`);
+    return axiosClient.get(`/api/donate/${token}/top`);
 };
 export const getLatestDonationsByStreamerId = (streamerId: number) => {
     return axiosClient.get(`/api/donate/${streamerId}/donations?limit=10`);
