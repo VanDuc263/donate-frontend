@@ -21,6 +21,9 @@ import {useSelector} from "react-redux";
 import {RootState} from "../app/store";
 import DonateOverlayPage from "../components/DonateOverlayPage";
 import CreateDonatePage from "../components/profile/CreateDonatePage";
+import ProfileInfo from "../components/profile/ProfileInfo";
+import StreamerBioInfo from "../components/profile/StreamerBioInfo";
+import DonateObsSettings from "../components/profile/DonateObsSettings";
 
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -40,7 +43,13 @@ const AppRoute = () => {
                 <Route path="/" element={<Home />} />
                 <Route path="/donate" element={<DonatePage />} />
 
-                <Route path="/account/profile" element={<UserProfile/>}/>
+                <Route path="/account/profile" element={<UserProfile/>}>
+                    <Route index element={<ProfileInfo />} />
+                    <Route path="bio" element={<StreamerBioInfo />} />
+                </Route>
+                <Route path="/account/donate-obs" element={<UserProfile/>}>
+                    <Route index element={<DonateObsSettings />} />
+                </Route>
                 <Route path="/account/create-streamer" element={<CreateDonatePage/>}/>
                 <Route path="/account/donations" element={<CreateDonatePage/>}/>
                 <Route path="/account/following" element={<CreateDonatePage/>}/>

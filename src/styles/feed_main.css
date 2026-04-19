@@ -1,8 +1,10 @@
 .feed-layout {
     display: grid;
-    grid-template-columns: 2.5fr 1fr;
+    grid-template-columns: minmax(0, 2.2fr) minmax(280px, 1fr);
     gap: 25px;
-    padding: 60px 10%;
+    padding: 56px 10% 40px;
+    align-items: start;
+    background: linear-gradient(180deg, #020617, #0f172a);
 }
 
 /* FEED */
@@ -18,14 +20,16 @@
     background: rgba(255,255,255,0.03);
     border: 1px solid rgba(255,255,255,0.06);
     border-radius: 16px;
-    padding: 20px;
+    padding: 18px;
 
     height: fit-content;
     backdrop-filter: blur(12px);
 }
+
 .top-donors h3 {
-    margin-bottom: 15px;
+    margin-bottom: 14px;
     color: #38bdf8;
+    font-size: 18px;
 }
 
 /* ITEM */
@@ -41,10 +45,12 @@
     margin-bottom: 8px;
 
     transition: 0.2s;
+    border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .donor-item:hover {
     background: rgba(56,189,248,0.1);
+    border-color: rgba(56, 189, 248, 0.35);
 }
 
 /* RANK */
@@ -63,4 +69,15 @@
 .money {
     color: #22c55e;
     font-weight: 600;
+}
+
+@media (max-width: 1024px) {
+    .feed-layout {
+        grid-template-columns: 1fr;
+        padding: 48px 8% 30px;
+    }
+
+    .feed-sidebar {
+        position: static;
+    }
 }

@@ -9,9 +9,9 @@ const FeedPage = () => {
                 <Feed />
             </div>
 
-            {/*<div className="feed-sidebar">*/}
-            {/*    <TopDonors />*/}
-            {/*</div>*/}
+            <div className="feed-sidebar">
+                <TopDonors />
+            </div>
         </section>
     );
 };

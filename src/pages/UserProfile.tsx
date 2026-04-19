@@ -1,13 +1,13 @@
 import "../styles/user_profile.css";
 import React from "react";
 import ProfileSidebar from "../components/profile/ProfileSidebar";
-import ProfileInfo from "../components/profile/ProfileInfo";
+import { Outlet } from "react-router-dom";
 
 const UserProfile = () => {
     return (
         <div className="profile-page">
             <ProfileSidebar />
-            <ProfileInfo />
+            <Outlet />
         </div>
     );
 };

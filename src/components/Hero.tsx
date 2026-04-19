@@ -1,11 +1,11 @@
 const Hero = () => (
     <section className="hero">
-        <h2>ZyScan đi cùng <span>nhà sáng tạo</span></h2>
-        <p>Tạo trang donate miễn phí - nhận tiền trực tiếp - không trung gian</p>
+        <h2>ZyScan di cung <span>nha sang tao</span></h2>
+        <p>Tao trang donate mien phi - nhan tien truc tiep - khong trung gian</p>
 
         <div className="hero-input">
             <input placeholder="your-page" />
-            <button>Tạo ngay</button>
+            <button>Tao ngay</button>
         </div>
     </section>
 );
