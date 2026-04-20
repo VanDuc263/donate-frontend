@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { login, loginWithGoogle, getMe } from "./authApi";
-import { uploadAvatar } from "../user/userApi";
-import {CreateStreamerThunk} from "../streamer/streamerSlice";
+import { uploadAvatar, updateProfile } from "../user/userApi";
+import { CreateStreamerThunk } from "../streamer/streamerSlice";
 
 /* =======================
    TYPES
@@ -9,15 +9,15 @@ import {CreateStreamerThunk} from "../streamer/streamerSlice";
 interface User {
     userId?: number;
     username: string;
-    fullName? : string;
-    role? : string;
+    fullName?: string;
+    role?: string;
     email?: string;
     avatar?: string;
 }
 
 interface AuthState {
     user: User | null;
-    streamer : any | null;
+    streamer: any | null;
     token: string | null;
     loading: boolean;
     error: string | null;
@@ -28,7 +28,7 @@ interface AuthState {
 ======================= */
 const initialState: AuthState = {
     user: null,
-    streamer : null,
+    streamer: null,
     token: localStorage.getItem("token"),
     loading: false,
     error: null,
@@ -45,7 +45,7 @@ export const loginThunk = createAsyncThunk(
 
             return {
                 token: res.data.token,
-                user: res.data.user
+                user: res.data.user,
             };
         } catch (err) {
             return thunkAPI.rejectWithValue("Sai tài khoản hoặc mật khẩu");
@@ -62,11 +62,10 @@ export const loginGoogleThunk = createAsyncThunk(
         try {
             const res = await loginWithGoogle(credential);
 
-            console.log(res)
             return {
                 token: res.data.token,
                 user: res.data.user,
-                streamer : res.data.streamer
+                streamer: res.data.streamer,
             };
         } catch (err) {
             return thunkAPI.rejectWithValue("Google login thất bại");
@@ -81,7 +80,7 @@ export const meThunk = createAsyncThunk(
             const res = await getMe();
             return {
                 user: res.data.user,
-                streamer : res.data.streamer
+                streamer: res.data.streamer,
             };
         } catch (err) {
             return thunkAPI.rejectWithValue("Token không hợp lệ");
@@ -97,10 +96,32 @@ export const uploadAvatarThunk = createAsyncThunk(
     async (file: File, thunkAPI) => {
         try {
             const res = await uploadAvatar(file);
-            console.log(res.data)
             return res.data;
         } catch (err) {
             return thunkAPI.rejectWithValue("Upload avatar thất bại");
+        }
+    }
+);
+
+/* =======================
+   UPDATE PROFILE
+======================= */
+export const updateProfileThunk = createAsyncThunk(
+    "auth/updateProfile",
+    async (data: { fullName: string; email: string }, thunkAPI) => {
+        try {
+            const res = await updateProfile(data);
+
+            return {
+                userId: res.data.id,
+                username: res.data.username,
+                fullName: res.data.fullName,
+                email: res.data.email,
+                role: res.data.role,
+                avatar: res.data.avatar,
+            };
+        } catch (err: any) {
+            return thunkAPI.rejectWithValue("Cập nhật thông tin thất bại");
         }
     }
 );
@@ -119,8 +140,6 @@ const authSlice = createSlice({
         },
     },
     extraReducers: (builder) => {
-
-        /* ===== LOGIN ===== */
         builder
             .addCase(loginThunk.pending, (state) => {
                 state.loading = true;
@@ -138,17 +157,14 @@ const authSlice = createSlice({
                 state.error = action.payload;
             });
 
-        /* ===== GOOGLE LOGIN ===== */
-        builder
-            .addCase(loginGoogleThunk.fulfilled, (state, action) => {
-                state.token = action.payload.token;
-                state.user = action.payload.user;
-                state.streamer = action.payload.streamer;
+        builder.addCase(loginGoogleThunk.fulfilled, (state, action) => {
+            state.token = action.payload.token;
+            state.user = action.payload.user;
+            state.streamer = action.payload.streamer;
 
-                localStorage.setItem("token", action.payload.token);
-            });
+            localStorage.setItem("token", action.payload.token);
+        });
 
-        /* ===== GET ME ===== */
         builder
             .addCase(meThunk.fulfilled, (state, action) => {
                 state.user = action.payload.user;
@@ -175,15 +191,27 @@ const authSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload as string;
             });
-        builder
-            .addCase(CreateStreamerThunk.fulfilled, (state, action) => {
-                state.token = action.payload.token;
-                state.user = action.payload.userResponse;
 
-                localStorage.setItem("token", action.payload.token);
-                // localStorage.setItem("refreshToken", action.payload.refreshToken);
+        builder
+            .addCase(updateProfileThunk.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(updateProfileThunk.fulfilled, (state, action) => {
+                state.loading = false;
+                state.user = action.payload;
+            })
+            .addCase(updateProfileThunk.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
             });
 
+        builder.addCase(CreateStreamerThunk.fulfilled, (state, action) => {
+            state.token = action.payload.token;
+            state.user = action.payload.userResponse;
+
+            localStorage.setItem("token", action.payload.token);
+        });
     },
 });
 
