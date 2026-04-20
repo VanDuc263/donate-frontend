@@ -11,3 +11,6 @@ export const uploadAvatar = (file : File) => {
     });
 
 }
+export const updateProfile = (data: { fullName: string; email: string }) => {
+    return axiosClient.put("/api/user/profile", data);
+}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../app/store";
-import { uploadAvatarThunk } from "../../features/auth/authSlice";
+import { uploadAvatarThunk,updateProfileThunk } from "../../features/auth/authSlice";
 import AvatarUpload from "./AvatarUpload";
 
 const ProfileInfo = () => {
@@ -14,17 +14,36 @@ const ProfileInfo = () => {
 
     const [avatar, setAvatar] = useState(avatarFromStore);
     const [file, setFile] = useState<File | null>(null);
+    const [fullName, setFullName] = useState(user?.fullName || "");
+    const [email, setEmail] = useState(user?.email || "");
 
     useEffect(() => {
         setAvatar(avatarFromStore);
     }, [avatarFromStore]);
 
-    const handleUploadImage = () => {
-        if (!file) {
-            alert("Vui lòng chọn ảnh");
-            return;
+    useEffect(() => {
+        setFullName(user?.fullName || "");
+        setEmail(user?.email || "");
+    }, [user]);
+
+    const handleSubmit = async () => {
+        try {
+            if (file) {
+                await dispatch(uploadAvatarThunk(file)).unwrap();
+            }
+
+            await dispatch(
+                updateProfileThunk({
+                    fullName,
+                    email,
+                })
+            ).unwrap();
+
+            alert("Cập nhật thông tin thành công");
+            setFile(null);
+        } catch (error) {
+            alert("Cập nhật thất bại");
         }
-        dispatch(uploadAvatarThunk(file));
     };
 
     return (
@@ -33,14 +52,17 @@ const ProfileInfo = () => {
                 <h2>Thông Tin</h2>
 
                 <AvatarUpload
-                    avatar={avatar}
+                    avatar={avatar || "https://i.pravatar.cc/150?img=12"}
                     setAvatar={setAvatar}
                     setFile={setFile}
                 />
 
                 <div className="form-group">
                     <label>Tên hiển thị</label>
-                    <input value={user?.fullName || ""} readOnly />
+                    <input  
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="Nhập tên hiển thị" />
                 </div>
 
                 <div className="form-group">
@@ -50,12 +72,16 @@ const ProfileInfo = () => {
 
                 <div className="form-group">
                     <label>Email</label>
+                    {/* <input 
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Nhập email" /> */}
                     <input value={user?.email || ""} readOnly />
                 </div>
 
                 <button
                     className="btn-save"
-                    onClick={handleUploadImage}
+                    onClick={handleSubmit}
                     disabled={loading}
                 >
                     {loading ? "Đang upload..." : "Cập nhật"}
