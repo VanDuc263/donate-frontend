@@ -1,17 +1,19 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axiosClient from "../../services/exiosClient";
 
 export const registerThunk = createAsyncThunk(
     "register/create",
-    async (data: { username: string; email: string; password: string }, thunkAPI) => {
+    async (
+        data: { username: string; email: string; password: string },
+        thunkAPI
+    ) => {
         try {
-            // Mock registration
-            await new Promise((r) => setTimeout(r, 1000));
-            if (data.username === "taken") {
-                throw new Error("Username đã tồn tại");
-            }
-            return { username: data.username, email: data.email };
+            const res = await axiosClient.post("/api/auth/register", data);
+            return res.data;
         } catch (err: any) {
-            return thunkAPI.rejectWithValue(err.message || "Đăng ký thất bại");
+            return thunkAPI.rejectWithValue(
+                err?.response?.data?.message || "Đăng ký thất bại"
+            );
         }
     }
 );
@@ -40,9 +42,11 @@ const registerSlice = createSlice({
             .addCase(registerThunk.fulfilled, (state) => {
                 state.loading = false;
                 state.success = true;
+                state.error = null;
             })
             .addCase(registerThunk.rejected, (state, action: any) => {
                 state.loading = false;
+                state.success = false;
                 state.error = action.payload;
             });
     },

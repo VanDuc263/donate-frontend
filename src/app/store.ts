@@ -7,6 +7,7 @@ import dashboardReducer from "../features/dashboard/dashboardSlice";
 import adminReducer from "../features/admin/adminSlice";
 import streamerReducer from "../features/streamer/streamerSlice"
 import donateReducer from "../features/donate/donateSlice"
+import notificationReducer from "../features/notification/notificationSlice";
 
 export const store = configureStore({
     reducer: {
@@ -18,6 +19,7 @@ export const store = configureStore({
         leaderboard: leaderboardReducer,
         dashboard: dashboardReducer,
         admin: adminReducer,
+        notification: notificationReducer,
     },
 });
 
