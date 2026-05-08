@@ -108,7 +108,6 @@ const StreamerDetail = () => {
         };
     }, [streamerDetail?.streamerId, dispatch]);
 
-    console.log(streamerDetail)
 
     // ================= UI =================
     const openDonate = useCallback(() => setShowDonate(true), []);
