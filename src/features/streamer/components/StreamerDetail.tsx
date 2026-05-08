@@ -8,6 +8,7 @@ import { fetchStreamer } from "../streamerSlice";
 import { getLatestDonationsByStreamerId, getTopDonor } from "../../donate/donateApi";
 import { connectSocket } from "../../../services/socket";
 import { addDonateRealtime, setDonations } from "../../donate/donateSlice";
+import QRWidget from "../../../components/QRWidget";
 
 const StreamerDetail = () => {
     const { token } = useParams();
@@ -66,7 +67,6 @@ const StreamerDetail = () => {
             ignore = true;
         };
     }, [token]);
-
     // ================= LOAD DONATIONS (ANTI OLD RESPONSE) =================
     useEffect(() => {
         if (!streamerDetail?.streamerId) return;
@@ -108,9 +108,7 @@ const StreamerDetail = () => {
         };
     }, [streamerDetail?.streamerId, dispatch]);
 
-    const convertAmount = (amount : number ) => {
-        
-    }
+    console.log(streamerDetail)
 
     // ================= UI =================
     const openDonate = useCallback(() => setShowDonate(true), []);
@@ -158,8 +156,16 @@ const StreamerDetail = () => {
 
                     <div className="left">
                         <div className="qr-box">
-                            <p>Quét mã để donate</p>
-                            <img src="/images/pay1.png" alt="QR" />
+                            <p style={{marginBottom: "10px",fontSize:"16px"}}>Quét mã để donate</p>
+
+                            {streamerDetail?.qrUrl && token &&(
+                                <QRWidget qrUrl={streamerDetail?.qrUrl} token={token}/>
+                            )}
+                            {!streamerDetail?.qrUrl &&(
+                                <p>
+                                    {"Streamer ch\u01b0a c\u1ea5u h\u00ecnh t\u00e0i kho\u1ea3n ng\u00e2n h\u00e0ng \u0111\u1ec3 t\u1ea1o QR code."}
+                                </p>
+                            )}
                         </div>
 
                         <div className="top-donator">
