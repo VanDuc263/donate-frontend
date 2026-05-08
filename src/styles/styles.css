@@ -7,11 +7,6 @@
     text-decoration: none;
 }
 
-body {
-    background: #0f172a;
-    color: white;
-}
-
 /* ===== HEADER ===== */
 .header {
     position: sticky;
@@ -244,14 +239,6 @@ nav a:hover {
     box-shadow: 0 0 10px rgba(239,68,68,0.6);
 }
 /* ===== HERO ===== */
-.hero {
-    padding: 120px 10%;
-    text-align: center;
-
-    background: radial-gradient(circle at top, #1e3a8a, #020617);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-
 .hero h2 {
     font-size: 48px;
     font-weight: 700;
@@ -266,40 +253,6 @@ nav a:hover {
 .hero p {
     opacity: 0.7;
     margin: 20px 0;
-}
-
-.hero-input {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.hero-input input {
-    padding: 12px 16px;
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.1);
-
-    width: 260px;
-    background: rgba(255,255,255,0.05);
-    color: white;
-}
-
-.hero-input input::placeholder {
-    color: rgba(255,255,255,0.4);
-}
-
-.hero-input button {
-    padding: 12px 20px;
-    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
-    border: none;
-    border-radius: 10px;
-
-    font-weight: 600;
-    color: black;
-    cursor: pointer;
-
-    transition: 0.25s;
 }
 
 .hero-input button:hover {
@@ -731,8 +684,108 @@ footer {
     color: rgba(255, 255, 255, 0.65);
     font-size: 14px;
 }
+.notification-wrapper {
+    position: relative;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notification-dropdown {
+    position: absolute;
+    top: 48px;
+    right: 0;
+    width: 360px;
+    max-height: 420px;
+    overflow: hidden;
+    border-radius: 16px;
+    background: rgba(2, 6, 23, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 18px 35px rgba(0, 0, 0, 0.45);
+    z-index: 1000;
+}
+
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    color: white;
+}
+
+.notification-header button {
+    background: transparent;
+    border: none;
+    color: #38bdf8;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.notification-body {
+    max-height: 360px;
+    overflow-y: auto;
+}
+
+.notification-item {
+    padding: 12px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: 0.2s;
+}
+
+.notification-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.notification-item.unread {
+    background: rgba(56, 189, 248, 0.12);
+}
+
+.notification-item.read {
+    background: transparent;
+}
+
+.notification-title {
+    color: white;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.notification-content {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 14px;
+    margin-bottom: 6px;
+}
+
+.notification-time {
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 12px;
+}
+
+.notification-empty {
+    padding: 16px;
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 14px;
+}
 
 body {
+    color: white;
     background:
         radial-gradient(circle at top, rgba(81, 91, 255, 0.35), transparent 32%),
         radial-gradient(circle at 50% 55%, rgba(66, 84, 255, 0.32), transparent 28%),

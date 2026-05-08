@@ -10,6 +10,18 @@ import {
     searchStreamers,
     SearchStreamerResponse,
 } from "../features/streamer/streamerApi";
+import axiosClient from "../services/exiosClient";
+
+interface NotificationItem {
+    id: number;
+    type: "SYSTEM" | "ACCOUNT" | "SECURITY" | "DONATION" | "PAYMENT" | "FOLLOW" | "STREAMER";
+    title: string;
+    content: string;
+    isRead: boolean;
+    redirectUrl?: string | null;
+    metadata?: string | null;
+    createdAt: string;
+}
 
 const Header = () => {
     const navigate = useNavigate();
@@ -18,15 +30,72 @@ const Header = () => {
 
     const [open, setOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
+    const [notificationOpen, setNotificationOpen] = useState(false);
+
     const [keyword, setKeyword] = useState("");
     const [results, setResults] = useState<SearchStreamerResponse[]>([]);
     const [loading, setLoading] = useState(false);
     const [searched, setSearched] = useState(false);
 
+    const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+    const [notificationLoading, setNotificationLoading] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
+
     const menuRef = useRef<HTMLDivElement>(null);
     const searchRef = useRef<HTMLDivElement>(null);
+    const notificationRef = useRef<HTMLDivElement>(null);
 
     const user = useAppSelector((state) => state.auth.user);
+
+    const fetchUnreadCount = async () => {
+        try {
+            const res = await axiosClient.get<{ count: number }>("/api/notifications/unread-count");
+            setUnreadCount(res.data?.count || 0);
+        } catch (error) {
+            console.error("Lỗi lấy số thông báo chưa đọc:", error);
+        }
+    };
+
+    const fetchNotifications = async () => {
+        try {
+            setNotificationLoading(true);
+            const res = await axiosClient.get<NotificationItem[]>("/api/notifications");
+            setNotifications(res.data || []);
+        } catch (error) {
+            console.error("Lỗi lấy danh sách thông báo:", error);
+            setNotifications([]);
+        } finally {
+            setNotificationLoading(false);
+        }
+    };
+
+    const markAsRead = async (id: number) => {
+        try {
+            await axiosClient.put(`/api/notifications/${id}/read`);
+
+            setNotifications((prev) =>
+                prev.map((item) =>
+                    item.id === id ? { ...item, isRead: true } : item
+                )
+            );
+
+            setUnreadCount((prev) => Math.max(0, prev - 1));
+        } catch (error) {
+            console.error("Lỗi đánh dấu đã đọc:", error);
+        }
+    };
+
+    const markAllAsRead = async () => {
+        try {
+            await axiosClient.put("/api/notifications/read-all");
+            setNotifications((prev) =>
+                prev.map((item) => ({ ...item, isRead: true }))
+            );
+            setUnreadCount(0);
+        } catch (error) {
+            console.error("Lỗi đọc hết thông báo:", error);
+        }
+    };
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -39,11 +108,24 @@ const Header = () => {
             if (searchRef.current && !searchRef.current.contains(target)) {
                 setSearchOpen(false);
             }
+
+            if (
+                notificationRef.current &&
+                !notificationRef.current.contains(target)
+            ) {
+                setNotificationOpen(false);
+            }
         };
 
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
+    useEffect(() => {
+        if (token) {
+            fetchUnreadCount();
+        }
+    }, [token]);
 
     useEffect(() => {
         const trimmedKeyword = keyword.trim();
@@ -74,12 +156,31 @@ const Header = () => {
         return () => clearTimeout(timeout);
     }, [keyword, searchOpen]);
 
+    useEffect(() => {
+        if (notificationOpen && token) {
+            fetchNotifications();
+            fetchUnreadCount();
+        }
+    }, [notificationOpen, token]);
+
     const handleSelectStreamer = (streamerToken: string) => {
         setSearchOpen(false);
         setKeyword("");
         setResults([]);
         setSearched(false);
         navigate(`/streamer/${streamerToken}`);
+    };
+
+    const handleClickNotification = async (item: NotificationItem) => {
+        if (!item.isRead) {
+            await markAsRead(item.id);
+        }
+
+        setNotificationOpen(false);
+
+        if (item.redirectUrl) {
+            navigate(item.redirectUrl);
+        }
     };
 
     return (
@@ -112,7 +213,10 @@ const Header = () => {
                     <div className="search-wrapper" ref={searchRef}>
                         <button
                             className="icon-btn"
-                            onClick={() => setSearchOpen(!searchOpen)}
+                            onClick={() => {
+                                setSearchOpen(!searchOpen);
+                                setNotificationOpen(false);
+                            }}
                             type="button"
                         >
                             <Icon path={mdiMagnify} size={1} />
@@ -177,9 +281,74 @@ const Header = () => {
                         )}
                     </div>
 
-                    <button className="icon-btn" type="button">
-                        <Icon path={mdiBellOutline} size={1} />
-                    </button>
+                    <div className="notification-wrapper" ref={notificationRef}>
+                        <button
+                            className="icon-btn"
+                            type="button"
+                            onClick={() => {
+                                setNotificationOpen(!notificationOpen);
+                                setSearchOpen(false);
+                            }}
+                        >
+                            <Icon path={mdiBellOutline} size={1} />
+                            {unreadCount > 0 && (
+                                <span className="notification-badge">
+                                    {unreadCount > 99 ? "99+" : unreadCount}
+                                </span>
+                            )}
+                        </button>
+
+                        {notificationOpen && (
+                            <div className="notification-dropdown">
+                                <div className="notification-header">
+                                    <strong>Thông báo</strong>
+                                    <button type="button" onClick={markAllAsRead}>
+                                        Đọc hết
+                                    </button>
+                                </div>
+
+                                <div className="notification-body">
+                                    {notificationLoading && (
+                                        <div className="notification-empty">
+                                            Đang tải thông báo...
+                                        </div>
+                                    )}
+
+                                    {!notificationLoading &&
+                                        notifications.length === 0 && (
+                                            <div className="notification-empty">
+                                                Chưa có thông báo nào
+                                            </div>
+                                        )}
+
+                                    {!notificationLoading &&
+                                        notifications.map((item) => (
+                                            <div
+                                                key={item.id}
+                                                className={`notification-item ${
+                                                    item.isRead ? "read" : "unread"
+                                                }`}
+                                                onClick={() =>
+                                                    handleClickNotification(item)
+                                                }
+                                            >
+                                                <div className="notification-title">
+                                                    {item.title}
+                                                </div>
+                                                <div className="notification-content">
+                                                    {item.content}
+                                                </div>
+                                                <div className="notification-time">
+                                                    {new Date(
+                                                        item.createdAt
+                                                    ).toLocaleString("vi-VN")}
+                                                </div>
+                                            </div>
+                                        ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
 
                     <div className="header-right" ref={menuRef}>
                         <div className="user-trigger" onClick={() => setOpen(!open)}>
