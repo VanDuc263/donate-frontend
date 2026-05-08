@@ -15,9 +15,19 @@ interface User {
     avatar?: string;
 }
 
+interface Streamer{
+    streamerId? : number;
+    avatar : string;
+    bio : string;
+    displayName : string;
+    followers : number;
+    thumb : string;
+    token : string;
+}
+
 interface AuthState {
     user: User | null;
-    streamer: any | null;
+    streamer: Streamer | null;
     token: string | null;
     loading: boolean;
     error: string | null;

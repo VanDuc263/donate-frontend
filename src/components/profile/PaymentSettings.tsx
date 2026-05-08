@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../app/store";
+import {savePaymentAccount} from "../../features/streamer/streamerApi";
 
 type PaymentMethod = {
     name: string;
@@ -58,14 +59,43 @@ const PaymentSettings = () => {
     const streamer = useSelector((state: RootState) => state.auth.streamer);
     const user = useSelector((state: RootState) => state.auth.user);
 
-    const displayName =
-        streamer?.displayName || user?.fullName || user?.username || "Người dùng";
+
 
     const [showBankModal, setShowBankModal] = useState(false);
     const [bank, setBank] = useState("MBBank");
     const [accountNumber, setAccountNumber] = useState("");
     const [accountHolder, setAccountHolder] = useState(user?.fullName || "");
 
+
+    const handleSavePayment = async () => {
+
+        try {
+
+            const payload = {
+                providerType: "BANK",
+                providerCode: bank,
+                accountNo: accountNumber,
+                accountName: accountHolder,
+                apiKey: "",
+                secretKey: "",
+                qrTemplate: ""
+            };
+
+            const response = await savePaymentAccount(payload);
+
+            console.log(response.data);
+
+            alert("Lưu tài khoản thành công");
+
+            setShowBankModal(false);
+
+        } catch (error) {
+
+            console.error(error);
+
+            alert("Có lỗi xảy ra");
+        }
+    };
     return (
         <div className="profile-content">
             <div className="profile-card payment-card">
@@ -183,7 +213,11 @@ const PaymentSettings = () => {
                             />
                         </div>
 
-                        <button type="button" className="payment-modal-update-btn" onClick={() => setShowBankModal(false)}>
+                        <button
+                            type="button"
+                            className="payment-modal-update-btn"
+                            onClick={handleSavePayment}
+                        >
                             Cập nhật
                         </button>
                     </div>

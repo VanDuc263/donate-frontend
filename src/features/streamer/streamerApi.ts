@@ -54,3 +54,12 @@ export const updateObsSetting = async (config : any) => {
     return axiosClient.post('api/settings/update', config)
 
 }
+export const savePaymentAccount = async (payload : any) => {
+    return axiosClient.post('api/payment-account/save', payload)
+
+}
+export const getQrUrl = async () => {
+    return axiosClient.get('api/payment-account/qr')
+}
+
+
