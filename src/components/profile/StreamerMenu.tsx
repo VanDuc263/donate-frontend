@@ -43,7 +43,7 @@ const StreamerMenu = () => {
             <NavLink to="/account/profile/bio" className={getClass}>
                 {"Th\u00f4ng Tin Bio"}
             </NavLink>
-            <NavLink to="/account/donations" className={getClass}>
+            <NavLink to="/account/payment" className={getClass}>
                 {"C\u00e0i \u0110\u1eb7t Thanh To\u00e1n"}
             </NavLink>
             <NavLink to="/account/donate-obs" className={getClass}>

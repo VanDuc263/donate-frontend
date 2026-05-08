@@ -44,4 +44,13 @@ export const createStreamer = (data : StreamerInfo) => {
         headers: {
             "Content-Type": "multipart/form-data",
         },
-    });}
+    });
+}
+export const getObsSetting = async () => {
+    return  axiosClient.get('api/settings/me')
+
+}
+export const updateObsSetting = async (config : any) => {
+    return axiosClient.post('api/settings/update', config)
+
+}

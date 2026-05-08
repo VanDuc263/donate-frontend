@@ -28,24 +28,32 @@ const Streamers = () => {
     const { topStreamers } = useSelector((state: any) => state.streamer);
 
     return (
-        <div>
-            <section className="streamers">
-                <h2>Top Streamers</h2>
+        <section className="streamers home-streamers">
+            <div className="home-section-title">
+                <span>Top streamer</span>
+                <h2>Những kênh nổi bật nhất trên hệ thống</h2>
+                <p>
+                    Bảng xếp hạng được làm nổi hơn, tập trung vào avatar, tên kênh và số tiền
+                    quyên góp.
+                </p>
+            </div>
 
-                <div className="grid">
-                    {topStreamers.map((s: any, i: number) => (
-                        <Link to={`/streamer/${s.token}`} key={s.id}>
-                            <div className="card">
-                                <span className="rank">#{i + 1}</span>
-                                <img src={s.avatar} alt={s.displayName} />
-                                <h3>{s.displayName}</h3>
-                                <p className="money">{convertAmount(s.totalAmount)} VND</p>
-                            </div>
-                        </Link>
-                    ))}
-                </div>
-            </section>
-        </div>
+            <div className="streamers-rail">
+                {topStreamers.map((s: any, i: number) => (
+                    <Link
+                        to={`/streamer/${s.token}`}
+                        key={s.id || s.streamerId}
+                        className={`card ${i === 0 ? "featured" : ""}`}
+                    >
+                        <span className="rank">#{i + 1}</span>
+                        <img src={s.avatar} alt={s.displayName} />
+                        <h3>{s.displayName}</h3>
+                        <p className="money">{convertAmount(s.totalAmount)} VND</p>
+                        <span className="card-link">Xem trang</span>
+                    </Link>
+                ))}
+            </div>
+        </section>
     );
 };
 
