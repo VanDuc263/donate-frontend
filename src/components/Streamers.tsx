@@ -49,6 +49,7 @@ const Streamers = () => {
                         <img src={s.avatar} alt={s.displayName} />
                         <h3>{s.displayName}</h3>
                         <p className="money">{convertAmount(s.totalAmount)} VND</p>
+                        <span className="card-link">Xem trang</span>
                     </Link>
                 ))}
             </div>

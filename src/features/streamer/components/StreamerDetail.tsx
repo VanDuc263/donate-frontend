@@ -94,7 +94,6 @@ const StreamerDetail = () => {
         activeStreamerIdRef.current = id;
 
         const disconnect = connectSocket(id, (data) => {
-            // ❗ CHẶN SOCKET CŨ
             if (activeStreamerIdRef.current !== id) return;
 
             dispatch(addDonateRealtime(data));

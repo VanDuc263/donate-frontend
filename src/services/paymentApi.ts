@@ -7,7 +7,7 @@ export const createPaymentQr = (data: {
   amount: number;
   message?: string;
 }) => {
-  return axiosClient.post("/api/payments/create-qr", data);
+  return axiosClient.post("/api/donate/qr", data);
 };
 
 export const getPaymentStatus = (orderCode: string) => {

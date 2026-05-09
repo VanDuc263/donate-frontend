@@ -22,8 +22,6 @@ export const connectSocket = (
                 }
             );
 
-            console.log(streamerId)
-
             stompClient.onDisconnect = () => {
                 subscription.unsubscribe();
             };

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "../../../styles/donate_form.css";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../app/store";
@@ -7,6 +7,7 @@ import {
   getPaymentStatus,
   transactionSyncTest,
 } from "../../../services/paymentApi";
+import QRWidget from "../../../components/QRWidget";
 
 type DonateModalProps = {
   onClose: () => void;
@@ -63,6 +64,8 @@ export default function DonateModal({ onClose }: DonateModalProps) {
 function WalletTab({ onClose }: { onClose: () => void }) {
   const user = useSelector((state: RootState) => state.auth.user);
   const streamer = useSelector((state: RootState) => state.streamer.streamerDetail);
+
+
 
   const [amount, setAmount] = useState<number>(0);
   const [message, setMessage] = useState("");
@@ -205,12 +208,7 @@ function WalletTab({ onClose }: { onClose: () => void }) {
         <div>
           <h3>Thông tin chuyển khoản</h3>
 
-          <p><strong>Ngân hàng:</strong> {paymentInfo.bankCode}</p>
-          <p><strong>Số tài khoản:</strong> {paymentInfo.accountNo}</p>
-          <p><strong>Tên tài khoản:</strong> {paymentInfo.accountName}</p>
-          <p><strong>Số tiền:</strong> {paymentInfo.amount.toLocaleString("vi-VN")} đ</p>
-          <p><strong>Nội dung CK:</strong> {paymentInfo.addInfo}</p>
-          <p><strong>Trạng thái:</strong> {paymentStatus || paymentInfo.status}</p>
+
 
           {error && <p style={{ color: "red", marginTop: 10 }}>{error}</p>}
 
@@ -234,6 +232,7 @@ function WalletTab({ onClose }: { onClose: () => void }) {
 function QRTab({ onClose }: { onClose: () => void }) {
   const user = useSelector((state: RootState) => state.auth.user);
   const streamer = useSelector((state: RootState) => state.streamer.streamerDetail);
+
 
   const [amount, setAmount] = useState<number>(0);
   const [message, setMessage] = useState("");
@@ -288,9 +287,12 @@ function QRTab({ onClose }: { onClose: () => void }) {
         amount: Number(amount),
         message,
       });
+        const data = res.data;
 
-      setPaymentInfo(res.data);
-      setPaymentStatus(res.data.status);
+        setPaymentInfo({
+            ...data,
+        });
+        setPaymentStatus(res.data.status);
     } catch (err: any) {
       console.error("Lỗi tạo payment:", err);
       setError(err?.response?.data?.message || "Không tạo được lệnh thanh toán.");
@@ -332,26 +334,8 @@ function QRTab({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const paymentText = useMemo(() => {
-    if (!paymentInfo) return "";
-    return [
-      `Ngân hàng: ${paymentInfo.bankCode}`,
-      `STK: ${paymentInfo.accountNo}`,
-      `Tên TK: ${paymentInfo.accountName}`,
-      `Số tiền: ${paymentInfo.amount.toLocaleString("vi-VN")} đ`,
-      `Nội dung: ${paymentInfo.addInfo}`,
-    ].join("\n");
-  }, [paymentInfo]);
 
-  const copyPaymentText = async () => {
-    if (!paymentText) return;
-    try {
-      await navigator.clipboard.writeText(paymentText);
-      alert("Đã sao chép thông tin thanh toán!");
-    } catch (err) {
-      console.error(err);
-    }
-  };
+
 
   return (
     <div>
@@ -378,26 +362,22 @@ function QRTab({ onClose }: { onClose: () => void }) {
         </div>
       ) : (
         <div>
-          {paymentInfo.qrUrl ? (
-            <img src={paymentInfo.qrUrl} alt="QR" />
+          {(paymentInfo.qrUrl && streamer?.token) ?(
+
+                  <QRWidget qrUrl={paymentInfo.qrUrl} token={streamer?.token}/>
           ) : (
             <div>
+
               <p>Chưa có ảnh QR thật. Dùng thông tin dưới để test.</p>
             </div>
           )}
 
           <div>
-            <p><strong>Ngân hàng:</strong> {paymentInfo.bankCode}</p>
-            <p><strong>Số tài khoản:</strong> {paymentInfo.accountNo}</p>
-            <p><strong>Tên tài khoản:</strong> {paymentInfo.accountName}</p>
-            <p><strong>Số tiền:</strong> {paymentInfo.amount.toLocaleString("vi-VN")} đ</p>
-            <p><strong>Nội dung CK:</strong> {paymentInfo.addInfo}</p>
-            <p><strong>Trạng thái:</strong> {paymentStatus || paymentInfo.status}</p>
+
 
             {error && <p style={{ color: "red", marginTop: 10 }}>{error}</p>}
 
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-              <button onClick={copyPaymentText}>Copy thông tin</button>
               <button onClick={handleSandboxPay} disabled={loading}>
                 {loading ? "Đang xử lý..." : "Test thanh toán"}
               </button>
