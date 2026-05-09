@@ -32,10 +32,7 @@ const Streamers = () => {
             <div className="home-section-title">
                 <span>Top streamer</span>
                 <h2>Những kênh nổi bật nhất trên hệ thống</h2>
-                <p>
-                    Bảng xếp hạng được làm nổi hơn, tập trung vào avatar, tên kênh và số tiền
-                    quyên góp.
-                </p>
+
             </div>
 
             <div className="streamers-rail">
@@ -49,7 +46,6 @@ const Streamers = () => {
                         <img src={s.avatar} alt={s.displayName} />
                         <h3>{s.displayName}</h3>
                         <p className="money">{convertAmount(s.totalAmount)} VND</p>
-                        <span className="card-link">Xem trang</span>
                     </Link>
                 ))}
             </div>
