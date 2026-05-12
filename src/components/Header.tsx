@@ -13,6 +13,7 @@ import {
 import axiosClient from "../services/exiosClient";
 import {generateQr} from "../features/payment/paymentApi";
 import QRWidget from "./QRWidget";
+import {getMyWallet} from "../features/wallet/walletApi";
 
 interface NotificationItem {
     id: number;
@@ -22,6 +23,15 @@ interface NotificationItem {
     isRead: boolean;
     redirectUrl?: string | null;
     metadata?: string | null;
+    createdAt: string;
+}
+
+interface Wallet{
+    id: number;
+    userId: number;
+    balance: number;
+    frozenBalance: number;
+    currency: string;
     createdAt: string;
 }
 
@@ -64,9 +74,11 @@ const Header = () => {
         amount: number;
         content: string;
     } | null>(null);
-
     const [qrLoading, setQrLoading] = useState(false);
 
+    const { wallet, error } = useAppSelector(
+        (state) => state.wallet
+    );
     const fetchUnreadCount = async () => {
         try {
             const res = await axiosClient.get<{ count: number }>("/api/notifications/unread-count");
@@ -227,9 +239,10 @@ const Header = () => {
 
             const res = await generateQr({
                 methodId: 1, // tạm thời bank default (sau bạn load từ API)
-                amount : depositTotal,
-                content: `TOPUP-${user?.userId}-${Date.now()}`
+                amount : depositTotal
+
             });
+
 
             setQrData(res.data);
 
@@ -274,7 +287,8 @@ const Header = () => {
                     }}>
                         <div>
                             <small>Ví : </small>
-                            <span>0đ</span>
+                            <span>{wallet?.balance} </span>
+                            <span>{wallet?.currency}</span>
                         </div>
                         <Icon path={mdiPlusCircleOutline} size={1} />
                     </div>

@@ -6,6 +6,7 @@ import { BrowserRouter } from "react-router-dom";
 import AppRoute from "./routes/AppRoute";
 import {meThunk} from "./features/auth/authSlice";
 import {useAppDispatch} from "./hooks/useAppDispatch";
+import {getMyWalletThunk} from "./features/wallet/walletSlice";
 
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
         useEffect(() => {
             if(token){
                 dispatch(meThunk())
+                dispatch(getMyWalletThunk())
             }
         }, [dispatch,token]);
 

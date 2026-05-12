@@ -5,6 +5,7 @@ import { RootState, AppDispatch } from "../app/store";
 import { Link, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import "../styles/login.css";
+import {getMyWalletThunk} from "../features/wallet/walletSlice";
 
 const Login = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -18,14 +19,21 @@ const Login = () => {
         if (!username || !password) return;
 
         const result = await dispatch(loginThunk({ username, password }));
-        if (loginThunk.fulfilled.match(result)) navigate("/");
+        if (loginThunk.fulfilled.match(result)){
+            await dispatch(getMyWalletThunk());
+            navigate("/");
+        }
     };
 
     const handleGoogleLogin = async (credential: string) => {
         if (!credential) return;
 
         const result = await dispatch(loginGoogleThunk(credential));
-        if (loginGoogleThunk.fulfilled.match(result)) navigate("/");
+        console.log(result)
+        if (loginGoogleThunk.fulfilled.match(result)){
+            await dispatch(getMyWalletThunk());
+            navigate("/");
+        }
     };
 
     return (

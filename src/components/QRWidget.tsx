@@ -42,7 +42,12 @@ export default function QRWidget(props : Props) {
                     color: "#4f46e5"
                 }}
             >
-                TAZIU.COM/{props.token}
+                { props.token.length > 0 ? (
+                    `TAZIU.COM/${props.token}`
+
+                    ) : null
+
+                }
             </div>
         </div>
     );

@@ -8,10 +8,12 @@ import adminReducer from "../features/admin/adminSlice";
 import streamerReducer from "../features/streamer/streamerSlice"
 import donateReducer from "../features/donate/donateSlice"
 import notificationReducer from "../features/notification/notificationSlice";
+import walletReducer from "../features/wallet/walletSlice";
 
 export const store = configureStore({
     reducer: {
         auth: authReducer,
+        wallet : walletReducer,
         streamer : streamerReducer,
         donate: donateReducer,
         profile: profileReducer,
