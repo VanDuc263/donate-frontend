@@ -15,6 +15,14 @@ export interface DonationHistoryItem {
     content?: string;
     referenceCode?: string;
 }
+export interface donationPayload {
+    streamerId: number;
+    donorId?: number | null;
+    donorName?: string;
+    amount: number;
+    message?: string;
+}
+
 
 export const donate = (data: any) => {
     return axiosClient.post("/api/donate/create", data);
@@ -43,4 +51,10 @@ export const getMySentDonationHistory = (limit: number = 30) => {
 
 export const getMyReceivedDonationHistory = (limit: number = 30) => {
     return axiosClient.get<DonationHistoryItem[]>(`/api/donate/history/received?limit=${limit}`);
+};
+export const donateByWallet = (data : donationPayload) => {
+    return axiosClient.post(`/api/donate/wallet`,data);
+};
+export const createPaymentQr = (data: donationPayload) => {
+    return axiosClient.post("/api/donate/qr", data);
 };

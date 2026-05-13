@@ -1,13 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "../../../styles/donate_form.css";
-import { useSelector } from "react-redux";
-import { RootState } from "../../../app/store";
+import {useDispatch, useSelector} from "react-redux";
+import {AppDispatch, RootState} from "../../../app/store";
 import {
-  createPaymentQr,
+
   getPaymentStatus,
   transactionSyncTest,
 } from "../../../services/paymentApi";
 import QRWidget from "../../../components/QRWidget";
+import WalletModal from "../../../components/WalletModal";
+import {createPaymentQr, donateByWallet} from "../donateApi";
+import {setWallet} from "../../wallet/walletSlice";
 
 type DonateModalProps = {
   onClose: () => void;
@@ -64,6 +67,7 @@ export default function DonateModal({ onClose }: DonateModalProps) {
 function WalletTab({ onClose }: { onClose: () => void }) {
   const user = useSelector((state: RootState) => state.auth.user);
   const streamer = useSelector((state: RootState) => state.streamer.streamerDetail);
+  const {wallet} = useSelector((state: RootState) => state.wallet);
 
 
 
@@ -74,6 +78,10 @@ function WalletTab({ onClose }: { onClose: () => void }) {
   const [paymentStatus, setPaymentStatus] = useState<string>("");
   const [error, setError] = useState("");
 
+    const [walletOpen, setWalletOpen] = useState(false);
+    const [walletStep, setWalletStep] = useState<1 | 2>(1);
+
+    const dispatch = useDispatch<AppDispatch>()
   useEffect(() => {
     if (!paymentInfo?.orderCode) return;
 
@@ -97,39 +105,6 @@ function WalletTab({ onClose }: { onClose: () => void }) {
     return () => clearInterval(interval);
   }, [paymentInfo, onClose]);
 
-  const handleCreatePayment = async () => {
-    try {
-      setError("");
-
-      if (!streamer?.streamerId) {
-        setError("Không tìm thấy streamer.");
-        return;
-      }
-
-      if (!amount || amount <= 0) {
-        setError("Vui lòng nhập số tiền hợp lệ.");
-        return;
-      }
-
-      setLoading(true);
-
-      const res = await createPaymentQr({
-        streamerId: streamer.streamerId,
-        donorId: user?.userId ?? null,
-        donorName: user?.fullName || user?.username || "Anonymous",
-        amount: Number(amount),
-        message,
-      });
-
-      setPaymentInfo(res.data);
-      setPaymentStatus(res.data.status);
-    } catch (err: any) {
-      console.error("Lỗi tạo payment:", err);
-      setError(err?.response?.data?.message || "Không tạo được lệnh thanh toán.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSandboxPay = async () => {
     if (!paymentInfo) {
@@ -164,23 +139,52 @@ function WalletTab({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const copyText = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      alert("Đã sao chép!");
-    } catch (err) {
-      console.error("Copy failed:", err);
-    }
-  };
+    const handleCreateDonationByWallet = async () => {
+        try {
+            setError("");
 
+            if (!streamer?.streamerId) {
+                setError("Không tìm thấy streamer.");
+                return;
+            }
+
+            if (!amount || amount <= 0) {
+                setError("Vui lòng nhập số tiền hợp lệ.");
+                return;
+            }
+
+            setLoading(true);
+
+            const res  = await donateByWallet({
+                streamerId: streamer.streamerId,
+                donorId: user?.userId ?? null,
+                donorName: user?.fullName || user?.username || "Anonymous",
+                amount: Number(amount),
+                message,
+            });
+            const data = res?.data;
+
+
+            dispatch(setWallet(data?.walletResponse))
+
+        } catch (err: any) {
+            setError(err?.response?.data?.message || "Không tạo được lệnh thanh toán.");
+        } finally {
+            setLoading(false);
+        }
+    };
   return (
     <div>
       {!paymentInfo ? (
         <div>
           <div>
             <p>Số dư</p>
-            <h3>0đ</h3>
-            <button disabled>Nạp</button>
+            <h3>{wallet?.balance}</h3>
+            <button onClick={ () => {
+                setWalletOpen(!walletOpen);
+                }
+            }
+            >Nạp</button>
           </div>
 
           <div>
@@ -199,32 +203,16 @@ function WalletTab({ onClose }: { onClose: () => void }) {
 
             {error && <p style={{ color: "red" }}>{error}</p>}
 
-            <button onClick={handleCreatePayment} disabled={loading}>
-              {loading ? "Đang tạo..." : "Tạo thanh toán"}
+            <button onClick={handleCreateDonationByWallet} disabled={loading}>
+              {loading ? "Đang tạo..." : "Tạo donate"}
             </button>
           </div>
         </div>
-      ) : (
-        <div>
-          <h3>Thông tin chuyển khoản</h3>
-
-
-
-          {error && <p style={{ color: "red", marginTop: 10 }}>{error}</p>}
-
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-            <button onClick={() => copyText(paymentInfo.accountNo)}>
-              Copy số tài khoản
-            </button>
-            <button onClick={() => copyText(paymentInfo.addInfo)}>
-              Copy nội dung CK
-            </button>
-            <button onClick={handleSandboxPay} disabled={loading}>
-              {loading ? "Đang xử lý..." : "Test thanh toán"}
-            </button>
-          </div>
-        </div>
-      )}
+      ) : null}
+    <WalletModal
+        open={walletOpen}
+        onClose={() => setWalletOpen(false)}
+    />
     </div>
   );
 }
@@ -240,6 +228,7 @@ function QRTab({ onClose }: { onClose: () => void }) {
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<string>("");
   const [error, setError] = useState("");
+
 
   useEffect(() => {
     if (!paymentInfo?.orderCode) return;
@@ -300,6 +289,7 @@ function QRTab({ onClose }: { onClose: () => void }) {
       setLoading(false);
     }
   };
+
 
   const handleSandboxPay = async () => {
     if (!paymentInfo) {

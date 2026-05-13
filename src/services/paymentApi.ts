@@ -1,14 +1,6 @@
 import axiosClient from "./exiosClient";
 
-export const createPaymentQr = (data: {
-  streamerId: number;
-  donorId?: number | null;
-  donorName?: string;
-  amount: number;
-  message?: string;
-}) => {
-  return axiosClient.post("/api/donate/qr", data);
-};
+
 
 export const getPaymentStatus = (orderCode: string) => {
   return axiosClient.get(`/api/payments/${orderCode}/status`);
