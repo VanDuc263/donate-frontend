@@ -29,7 +29,6 @@ const Login = () => {
         if (!credential) return;
 
         const result = await dispatch(loginGoogleThunk(credential));
-        console.log(result)
         if (loginGoogleThunk.fulfilled.match(result)){
             await dispatch(getMyWalletThunk());
             navigate("/");

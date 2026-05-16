@@ -2,7 +2,15 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { RootState } from "../../app/store";
-import { DonationHistoryItem, getMyDonationHistory } from "../../features/donate/donateApi";
+import {
+    DonationHistoryItem,
+    getMyReceivedDonationHistory,
+    getMySentDonationHistory,
+} from "../../features/donate/donateApi";
+
+type HistoryTab = "received" | "sent";
+
+const PAGE_SIZE = 20;
 
 const formatMoney = (value?: number) => {
     if (value == null) return "0đ";
@@ -65,13 +73,34 @@ const DonationHistoryPage = () => {
     const role = user?.role?.replace("ROLE_", "");
     const isStreamer = role === "STREAMER";
 
+    const [activeTab, setActiveTab] = useState<HistoryTab>(isStreamer ? "received" : "sent");
     const [donations, setDonations] = useState<DonationHistoryItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
 
     const title = useMemo(() => {
-        return isStreamer ? "Lịch sử nhận donate" : "Lịch sử donate";
-    }, [isStreamer]);
+        return activeTab === "received" ? "Lịch sử nhận donate" : "Lịch sử gửi donate";
+    }, [activeTab]);
+
+    const description = useMemo(() => {
+        return activeTab === "received"
+            ? "Hiển thị các khoản donate bạn đã nhận thành công."
+            : "Hiển thị các khoản donate bạn đã gửi thành công.";
+    }, [activeTab]);
+
+    const emptyText = useMemo(() => {
+        return activeTab === "received"
+            ? "Khi có người donate thành công, giao dịch sẽ xuất hiện tại đây."
+            : "Sau khi bạn donate thành công, giao dịch sẽ xuất hiện tại đây.";
+    }, [activeTab]);
+
+    const totalPages = Math.max(1, Math.ceil(donations.length / PAGE_SIZE));
+
+    const paginatedDonations = useMemo(() => {
+        const start = (currentPage - 1) * PAGE_SIZE;
+        return donations.slice(start, start + PAGE_SIZE);
+    }, [currentPage, donations]);
 
     useEffect(() => {
         let ignore = false;
@@ -80,8 +109,11 @@ const DonationHistoryPage = () => {
             try {
                 setLoading(true);
                 setError("");
+                setCurrentPage(1);
 
-                const res = await getMyDonationHistory(50);
+                const res = activeTab === "received"
+                    ? await getMyReceivedDonationHistory(50)
+                    : await getMySentDonationHistory(50);
 
                 if (!ignore) {
                     setDonations(res.data || []);
@@ -103,7 +135,13 @@ const DonationHistoryPage = () => {
         return () => {
             ignore = true;
         };
-    }, []);
+    }, [activeTab]);
+
+    useEffect(() => {
+        if (currentPage > totalPages) {
+            setCurrentPage(totalPages);
+        }
+    }, [currentPage, totalPages]);
 
     return (
         <div className="profile-content">
@@ -111,7 +149,24 @@ const DonationHistoryPage = () => {
                 <div className="donation-history-head">
                     <div>
                         <h2>{title}</h2>
-                        <p>Chỉ hiển thị các giao dịch đã thanh toán thành công.</p>
+                        <p>{description}</p>
+
+                        <div className="donation-history-tabs">
+                            <button
+                                type="button"
+                                className={activeTab === "received" ? "active" : ""}
+                                onClick={() => setActiveTab("received")}
+                            >
+                                Lịch sử nhận
+                            </button>
+                            <button
+                                type="button"
+                                className={activeTab === "sent" ? "active" : ""}
+                                onClick={() => setActiveTab("sent")}
+                            >
+                                Lịch sử gửi
+                            </button>
+                        </div>
                     </div>
 
                     <span className="donation-count">{donations.length} giao dịch</span>
@@ -124,59 +179,83 @@ const DonationHistoryPage = () => {
                 {!loading && !error && donations.length === 0 && (
                     <div className="donation-empty">
                         <h3>Chưa có donate nào</h3>
-                        <p>
-                            {isStreamer
-                                ? "Khi có người donate thành công, giao dịch sẽ xuất hiện tại đây."
-                                : "Sau khi bạn donate thành công, giao dịch sẽ xuất hiện tại đây."}
-                        </p>
+                        <p>{emptyText}</p>
                     </div>
                 )}
 
                 {!loading && !error && donations.length > 0 && (
                     <div className="donation-history-list">
-                        {donations.map((item) => (
-                            <div className="dh-item" key={item.id}>
-                                <div className="dh-left">
-                                    <div className="dh-avatar">
-                                        {isStreamer
-                                            ? (item.donorName || "A").charAt(0).toUpperCase()
-                                            : item.streamerAvatar
-                                                ? <img src={item.streamerAvatar} alt={item.streamerName || "streamer"} />
-                                                : (item.streamerName || "S").charAt(0).toUpperCase()}
-                                    </div>
+                        <div className="dh-table-shell">
+                            <div className="dh-table-head">
+                                <span>Username</span>
+                                <span>Số tiền</span>
+                                <span>Nội dung</span>
+                                <span>Thời gian</span>
+                            </div>
 
-                                    <div>
-                                        <div className="dh-streamer">
-                                            {isStreamer ? (
-                                                <>Từ: {item.donorName || "Anonymous"}</>
-                                            ) : item.streamerToken ? (
-                                                <>
-                                                    Đến:{" "}
-                                                    <Link to={`/streamer/${item.streamerToken}`}>
-                                                        {item.streamerName || "Streamer"}
-                                                    </Link>
-                                                </>
-                                            ) : (
-                                                <>Đến: {item.streamerName || "Streamer"}</>
+                            <div className="dh-table-body">
+                                {paginatedDonations.map((item) => {
+                                    const username = activeTab === "received"
+                                        ? item.donorName || "Anonymous"
+                                        : item.streamerName || "Streamer";
+                                    const detail = item.content || item.message || "Không có nội dung";
+
+                                    return (
+                                        <div className="dh-item" key={item.id}>
+                                            <div className="dh-cell dh-user" data-label="Username">
+                                                {activeTab === "sent" && item.streamerToken ? (
+                                                    <Link to={`/streamer/${item.streamerToken}`}>{username}</Link>
+                                                ) : (
+                                                    <span>{username}</span>
+                                                )}
+                                            </div>
+
+                                            <div className="dh-cell dh-amount" data-label="Số tiền">
+                                                {formatMoney(item.amount)}
+                                            </div>
+
+                                            <div className="dh-cell dh-content" data-label="Nội dung">
+                                                {detail}
+                                            </div>
+
+                                            <div className="dh-cell dh-time" data-label="Thời gian">
+                                                {formatDate(item.createdAt)}
+                                            </div>
+
+                                            {item.referenceCode && (
+                                                <div className="dh-row-meta">
+                                                    Mã GD: {item.referenceCode}
+                                                </div>
                                             )}
                                         </div>
-
-                                        {item.message && <div className="dh-msg">“{item.message}”</div>}
-
-                                        <div className="dh-meta">
-                                            <span>{formatDate(item.createdAt)}</span>
-                                            {item.referenceCode && <span>Mã GD: {item.referenceCode}</span>}
-                                            {item.content && <span>Nội dung: {item.content}</span>}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="dh-right">
-                                    <div className="dh-amount">{formatMoney(item.amount)}</div>
-                                    <span className="dh-status">{item.status || "SUCCESS"}</span>
-                                </div>
+                                    );
+                                })}
                             </div>
-                        ))}
+                        </div>
+
+                        {totalPages > 1 && (
+                            <div className="dh-pagination">
+                                <button
+                                    type="button"
+                                    onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    Trước
+                                </button>
+
+                                <span>
+                                    Trang {currentPage}/{totalPages}
+                                </span>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    Sau
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

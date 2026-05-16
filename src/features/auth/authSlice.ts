@@ -71,7 +71,7 @@ export const loginGoogleThunk = createAsyncThunk(
     async (credential: string, thunkAPI) => {
         try {
             const res = await loginWithGoogle(credential);
-
+            console.log(res)
             return {
                 token: res.data.token,
                 user: res.data.user,
