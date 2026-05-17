@@ -27,6 +27,7 @@ import DonateObsSettings from "../components/profile/DonateObsSettings";
 import PaymentSettings from "../components/profile/PaymentSettings";
 import DonationHistoryPage from "../components/profile/DonationHistoryPage";
 import FollowingPage from "../components/profile/FollowingPage";
+import WalletPage from "../components/profile/WalletPage";
 
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -62,6 +63,9 @@ const AppRoute = () => {
                 </Route>
                 <Route path="/account/following" element={<UserProfile/>}>
                     <Route index element={<FollowingPage />} />
+                </Route>
+                <Route path="/account/wallet" element={<UserProfile/>}>
+                    <Route index element={<WalletPage />} />
                 </Route>
 
                 {/* Detail streamer */}

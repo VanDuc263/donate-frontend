@@ -19,6 +19,10 @@ const UserMenu = () => {
                 Thông Tin
             </NavLink>
 
+            <NavLink to="/account/wallet" className={getClass}>
+                Ví của tôi
+            </NavLink>
+
             <NavLink to="/account/donations" className={getClass}>
                 Lịch Sử Donate
             </NavLink>

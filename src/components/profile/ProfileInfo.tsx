@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../app/store";
-import { uploadAvatarThunk,updateProfileThunk } from "../../features/auth/authSlice";
+import { uploadAvatarThunk, updateProfileThunk } from "../../features/auth/authSlice";
 import AvatarUpload from "./AvatarUpload";
 
 const ProfileInfo = () => {
@@ -59,10 +59,11 @@ const ProfileInfo = () => {
 
                 <div className="form-group">
                     <label>Tên hiển thị</label>
-                    <input  
+                    <input
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        placeholder="Nhập tên hiển thị" />
+                        placeholder="Nhập tên hiển thị"
+                    />
                 </div>
 
                 <div className="form-group">
@@ -72,10 +73,6 @@ const ProfileInfo = () => {
 
                 <div className="form-group">
                     <label>Email</label>
-                    {/* <input 
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Nhập email" /> */}
                     <input value={user?.email || ""} readOnly />
                 </div>
 

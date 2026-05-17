@@ -21,17 +21,22 @@ const StreamerMenu = () => {
 
     return (
         <div className="profile-menu">
-            <p className="menu-title">{"C\u00e1 Nh\u00e2n"}</p>
+            <p className="menu-title">Cá Nhân</p>
 
             <NavLink to="/account/profile" end className={getClass}>
-                {"Th\u00f4ng Tin"}
+                Thông Tin
+            </NavLink>
+            <NavLink to="/account/wallet" className={getClass}>
+                Ví của tôi
             </NavLink>
             <NavLink to="/account/donations" className={getClass}>
-                {"L\u1ecbch S\u1eed Donate"}
+                Lịch Sử Donate
             </NavLink>
             <NavLink to="/account/following" className={getClass}>
-                {"Danh S\u00e1ch Theo D\u00f5i"}
+                Danh Sách Theo Dõi
             </NavLink>
+
+            <hr />
 
             <div className="menu-title">
                 <span>Trang ZyScan</span>
@@ -41,22 +46,22 @@ const StreamerMenu = () => {
             </div>
 
             <NavLink to="/account/profile/bio" className={getClass}>
-                {"Th\u00f4ng Tin Bio"}
+                Thông Tin Bio
             </NavLink>
             <NavLink to="/account/payment" className={getClass}>
-                {"C\u00e0i \u0110\u1eb7t Thanh To\u00e1n"}
+                Cài Đặt Thanh Toán
             </NavLink>
             <NavLink to="/account/donate-obs" className={getClass}>
-                {"C\u00e0i \u0110\u1eb7t Donate OBS"}
+                Cài Đặt Donate OBS
             </NavLink>
 
-            <p className="menu-title">{"Kh\u00e1c"}</p>
+            <p className="menu-title">Khác</p>
             <NavLink to="/account/donations" className={getClass}>
-                {"N\u00e2ng Cao"}
+                Nâng Cao
             </NavLink>
 
             <span className="logout" onClick={handleLogout}>
-                {"\u0110\u0103ng xu\u1ea5t"}
+                Đăng xuất
             </span>
         </div>
     );

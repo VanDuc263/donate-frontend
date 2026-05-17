@@ -61,5 +61,11 @@ export const savePaymentAccount = async (payload : any) => {
 export const getQrUrl = async () => {
     return axiosClient.get('api/payment-account/qr')
 }
+export const followStreamer = (token: string) => {
+    return axiosClient.post(`/api/follows/${token}`);
+};
 
+export const unfollowStreamer = (token: string) => {
+    return axiosClient.delete(`/api/follows/${token}`);
+};
 

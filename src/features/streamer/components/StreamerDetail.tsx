@@ -9,6 +9,7 @@ import { getLatestDonationsByStreamerId, getTopDonor } from "../../donate/donate
 import { connectSocket } from "../../../services/socket";
 import { addDonateRealtime, setDonations } from "../../donate/donateSlice";
 import QRWidget from "../../../components/QRWidget";
+import {followStreamer, unfollowStreamer} from "../streamerApi";
 
 const StreamerDetail = () => {
     const { token } = useParams();
@@ -106,8 +107,31 @@ const StreamerDetail = () => {
             disconnect();
         };
     }, [streamerDetail?.streamerId, dispatch]);
+    const [isFollowing, setIsFollowing] = useState(false);
+    const [followLoading, setFollowLoading] = useState(false);
+    useEffect(() => {
+        setIsFollowing(!!streamerDetail?.following);
+    }, [streamerDetail?.following]);
+    const handleFollowToggle = async () => {
+        if (!token || followLoading) return;
 
+        try {
+            setFollowLoading(true);
 
+            if (isFollowing) {
+                await unfollowStreamer(token);
+                setIsFollowing(false);
+            } else {
+                await followStreamer(token);
+                setIsFollowing(true);
+            }
+
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setFollowLoading(false);
+        }
+    };
     // ================= UI =================
     const openDonate = useCallback(() => setShowDonate(true), []);
     const closeDonate = useCallback(() => setShowDonate(false), []);
@@ -142,8 +166,15 @@ const StreamerDetail = () => {
                         <button onClick={openDonate} className="donate-btn">
                             Donate
                         </button>
-                        <button>Theo dõi</button>
-                        <button>Chia sẻ</button>
+                        {!streamerDetail?.following
+                         ? (
+                            <button onClick={handleFollowToggle}>Theo dõi</button>
+
+                            ):(
+                                <button> Đang theo dõi</button>
+                            )
+                        }
+                        <button onClick={handleFollowToggle}>Chia sẻ</button>
                     </div>
 
                 </div>

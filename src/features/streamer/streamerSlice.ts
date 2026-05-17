@@ -13,6 +13,7 @@ export const fetchStreamer = createAsyncThunk(
     async (token: string, { rejectWithValue }) => {
         try {
             const res = await getStreamer(token);
+            console.log(res.data)
             return res.data;
         } catch (err: any) {
             return rejectWithValue(err.response?.data || "Error");
