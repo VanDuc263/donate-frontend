@@ -68,4 +68,8 @@ export const followStreamer = (token: string) => {
 export const unfollowStreamer = (token: string) => {
     return axiosClient.delete(`/api/follows/${token}`);
 };
+export const convertTextToSpeech = (payload : any) => {
+    return axiosClient.post(`/api/tts/fpt`,payload);
+
+}
 

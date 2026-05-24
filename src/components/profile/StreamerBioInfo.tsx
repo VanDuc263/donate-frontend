@@ -1,71 +1,112 @@
-import React, {useEffect, useMemo, useState} from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../app/store";
 import QRWidget from "../QRWidget";
-import {getQrUrl, savePaymentAccount} from "../../features/streamer/streamerApi";
+import { getQrUrl } from "../../features/streamer/streamerApi";
+
+const FALLBACK_THUMB = "/images/streamers/test.png";
 
 const StreamerBioInfo = () => {
-
     const user = useSelector((state: RootState) => state.auth.user);
     const streamer = useSelector((state: RootState) => state.auth.streamer);
 
     const defaultPageName = streamer?.displayName || user?.username || "";
     const defaultToken = streamer?.token || user?.username || "";
+    const defaultThumb = streamer?.thumb || FALLBACK_THUMB;
 
     const [pageName, setPageName] = useState(defaultPageName);
     const [bio, setBio] = useState(streamer?.bio || "");
     const [category, setCategory] = useState("Streamer");
+    const [thumb, setThumb] = useState(defaultThumb);
+    const [thumbName, setThumbName] = useState("");
 
     const [zalo, setZalo] = useState("");
     const [facebook, setFacebook] = useState("");
     const [youtube, setYoutube] = useState("");
     const [tiktok, setTiktok] = useState("");
     const [instagram, setInstagram] = useState("");
+    const [qrUrl, setQrUrl] = useState<string | null>(null);
+
+    const thumbInputRef = useRef<HTMLInputElement | null>(null);
+    const token = streamer?.token;
 
     const donateLink = useMemo(
         () => `https://zyscan.com/${defaultToken || "your-link"}`,
         [defaultToken]
     );
-    const token = streamer?.token
-    const [qrUrl,setQrUrl] = useState<string | null>()
 
-    const handleSubmit = () => {
-        alert("Đã cập nhật thông tin bio (demo UI)");
-    };
+    useEffect(() => {
+        setPageName(defaultPageName);
+        setBio(streamer?.bio || "");
+        setThumb(defaultThumb);
+        setThumbName("");
+    }, [defaultPageName, defaultThumb, streamer?.bio]);
+
     useEffect(() => {
         const handleGetQrUrl = async () => {
-
             try {
                 const response = await getQrUrl();
-
-                console.log(response);
-
-                setQrUrl(response.data)
-
+                setQrUrl(response.data);
             } catch (error) {
-
                 console.error(error);
-
             }
         };
-        handleGetQrUrl()
+
+        handleGetQrUrl();
     }, [streamer]);
+
+    const handleSubmit = () => {
+        alert("Da cap nhat thong tin bio (demo UI)");
+    };
+
+    const handleThumbUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFile = e.target.files?.[0];
+        if (!selectedFile) return;
+
+        if (!selectedFile.type.startsWith("image/")) {
+            e.target.value = "";
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            if (typeof reader.result === "string") {
+                setThumb(reader.result);
+                setThumbName(selectedFile.name);
+            }
+        };
+        reader.readAsDataURL(selectedFile);
+        e.target.value = "";
+    };
+
     return (
         <div className="profile-content">
             <div className="profile-card streamer-bio-card">
-
-                <h2>Thông Tin Bio</h2>
+                <h2>Thong Tin Bio</h2>
 
                 <div className="streamer-bio-grid">
-
-                    {/* LEFT */}
                     <div className="streamer-bio-left">
-
                         <div className="streamer-cover-wrap">
                             <img
                                 className="streamer-cover-image"
-                                src="/images/streamers/test.png"
+                                src={thumb}
                                 alt="cover"
+                            />
+
+                            <button
+                                type="button"
+                                className="streamer-cover-upload"
+                                onClick={() => thumbInputRef.current?.click()}
+                            >
+                                {thumbName ? "Doi thumb khac" : "Tai thumb moi"}
+                            </button>
+
+                            <input
+                                ref={thumbInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={handleThumbUpload}
+                                hidden
                             />
 
                             <img
@@ -75,8 +116,14 @@ const StreamerBioInfo = () => {
                             />
                         </div>
 
+                        {thumbName && (
+                            <div className="streamer-thumb-meta">
+                                Da chon: {thumbName}
+                            </div>
+                        )}
+
                         <div className="form-group">
-                            <label>Tên trang</label>
+                            <label>Ten trang</label>
 
                             <input
                                 value={pageName}
@@ -86,7 +133,7 @@ const StreamerBioInfo = () => {
                         </div>
 
                         <div className="form-group">
-                            <label>Liên kết</label>
+                            <label>Lien ket</label>
 
                             <input
                                 value={donateLink}
@@ -95,43 +142,36 @@ const StreamerBioInfo = () => {
                         </div>
 
                         <div className="form-group">
-                            <label>Giới thiệu</label>
+                            <label>Gioi thieu</label>
 
                             <textarea
                                 value={bio}
                                 onChange={(e) => setBio(e.target.value)}
-                                placeholder="Viết giới thiệu ngắn về bạn"
+                                placeholder="Viet gioi thieu ngan ve ban"
                             />
                         </div>
 
                         <div className="form-group">
-                            <label>Phân loại</label>
+                            <label>Phan loai</label>
 
                             <select
                                 value={category}
                                 onChange={(e) => setCategory(e.target.value)}
                             >
-                                <option value="Streamer">
-                                    Streamer
-                                </option>
-
-                                <option value="Creator">
-                                    Creator
-                                </option>
+                                <option value="Streamer">Streamer</option>
+                                <option value="Creator">Creator</option>
                             </select>
                         </div>
                     </div>
 
-                    {/* RIGHT */}
                     <div className="streamer-bio-right">
-
                         <div className="form-group">
                             <label>Zalo</label>
 
                             <input
                                 value={zalo}
                                 onChange={(e) => setZalo(e.target.value)}
-                                placeholder="Dán link zalo tại đây"
+                                placeholder="Dan link zalo tai day"
                             />
                         </div>
 
@@ -141,7 +181,7 @@ const StreamerBioInfo = () => {
                             <input
                                 value={facebook}
                                 onChange={(e) => setFacebook(e.target.value)}
-                                placeholder="Dán link facebook tại đây"
+                                placeholder="Dan link facebook tai day"
                             />
                         </div>
 
@@ -151,7 +191,7 @@ const StreamerBioInfo = () => {
                             <input
                                 value={youtube}
                                 onChange={(e) => setYoutube(e.target.value)}
-                                placeholder="Dán link youtube tại đây"
+                                placeholder="Dan link youtube tai day"
                             />
                         </div>
 
@@ -161,7 +201,7 @@ const StreamerBioInfo = () => {
                             <input
                                 value={tiktok}
                                 onChange={(e) => setTiktok(e.target.value)}
-                                placeholder="Dán link tiktok tại đây"
+                                placeholder="Dan link tiktok tai day"
                             />
                         </div>
 
@@ -171,22 +211,18 @@ const StreamerBioInfo = () => {
                             <input
                                 value={instagram}
                                 onChange={(e) => setInstagram(e.target.value)}
-                                placeholder="Dán link instagram tại đây"
+                                placeholder="Dan link instagram tai day"
                             />
                         </div>
 
-                        {/* QR BOX */}
                         <div className="bio-qr-box">
-
-                            <h3>
-                                QR Donate Nhanh
-                            </h3>
-                            {token && qrUrl &&(
-                                <QRWidget qrUrl={qrUrl} token={token}/>
+                            <h3>QR Donate Nhanh</h3>
+                            {token && qrUrl && (
+                                <QRWidget qrUrl={qrUrl} token={token} />
                             )}
-                            {token && !qrUrl &&(
+                            {token && !qrUrl && (
                                 <p>
-                                    {"Streamer ch\u01b0a c\u1ea5u h\u00ecnh t\u00e0i kho\u1ea3n ng\u00e2n h\u00e0ng \u0111\u1ec3 t\u1ea1o QR code."}
+                                    Streamer chua cau hinh tai khoan ngan hang de tao QR code.
                                 </p>
                             )}
                         </div>
@@ -197,7 +233,7 @@ const StreamerBioInfo = () => {
                     className="btn-save bio-submit-btn"
                     onClick={handleSubmit}
                 >
-                    Cập nhật
+                    Cap nhat
                 </button>
             </div>
         </div>

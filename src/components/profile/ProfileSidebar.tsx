@@ -12,7 +12,7 @@ const ProfileSidebar = () => {
     return (
         <div className="profile-sidebar">
             <div className="profile-user">
-                <img src={user?.avatar || ""} alt="avatar" />
+                <img src={user?.avatar || "/logo192.png"} alt="avatar" />
                 <h3>{user?.fullName || "User"}</h3>
             </div>
 

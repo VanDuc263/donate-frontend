@@ -508,6 +508,26 @@
     border-radius: 12px;
 }
 
+.streamer-cover-upload {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    z-index: 3;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.88);
+    color: #f8fafc;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(2, 6, 23, 0.35);
+}
+
+.streamer-cover-upload:hover {
+    background: rgba(30, 41, 59, 0.96);
+}
+
 .streamer-cover-avatar {
     position: absolute;
     left: 50%;
@@ -525,6 +545,13 @@
 
 .streamer-bio-left .form-group:first-of-type {
     margin-top: 0;
+}
+
+.streamer-thumb-meta {
+    margin-top: -40px;
+    margin-bottom: 18px;
+    font-size: 13px;
+    color: #94a3b8;
 }
 
 .bio-qr-box {
@@ -582,6 +609,7 @@
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.06);
     background: rgba(255, 255, 255, 0.02);
+    margin-bottom: 10px;
 }
 
 .obs-tab-row button,
@@ -633,6 +661,7 @@
 }
 
 .obs-preview-stage {
+    position: relative;
     min-height: 320px;
     border-radius: 12px;
     border: 2px solid rgba(0, 0, 0, 0.9);
@@ -640,6 +669,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
@@ -773,18 +803,60 @@
     font-size: 13px;
 }
 
-.obs-color-chip {
+.obs-color-control {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.obs-color-input {
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-.obs-color-chip i {
-    display: inline-block;
-    width: 24px;
-    height: 24px;
-    border-radius: 2px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
+.obs-color-input input[type="color"] {
+    width: 48px;
+    min-width: 48px;
+    height: 40px;
+    padding: 4px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #020617;
+    cursor: pointer;
+}
+
+.obs-color-input input[type="text"] {
+    flex: 1;
+}
+
+.obs-transparent-btn {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    color: #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+}
+
+.obs-transparent-btn.active {
+    border-color: rgba(125, 211, 252, 0.6);
+    background: rgba(14, 116, 144, 0.2);
+}
+
+.obs-template-help {
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: #e2e8f0;
+    line-height: 1.6;
+}
+
+.obs-template-help small {
+    display: block;
+    margin-top: 8px;
+    color: #94a3b8;
 }
 
 .obs-display-gallery h3 {
@@ -921,6 +993,47 @@
     padding: 8px;
 }
 
+.obs-sound-tile,
+.obs-sound-upload {
+    width: 100%;
+    appearance: none;
+    font: inherit;
+    cursor: pointer;
+}
+
+.obs-image-tile {
+    width: 100%;
+    appearance: none;
+    font: inherit;
+    cursor: pointer;
+}
+
+.obs-sound-upload {
+    min-height: 78px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    background: rgba(255, 255, 255, 0.02);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: #e2e8f0;
+    font-size: 13px;
+    text-align: left;
+    padding: 12px;
+    cursor: pointer;
+}
+
+.obs-sound-upload strong,
+.obs-sound-upload span {
+    display: block;
+}
+
+.obs-sound-upload span {
+    color: rgba(226, 232, 240, 0.72);
+}
+
 .obs-image-tile img {
     width: 100%;
     height: 100%;
@@ -929,14 +1042,30 @@
 }
 
 .obs-image-tile.selected,
-.obs-sound-tile.selected {
-    border-color: rgba(255, 255, 255, 0.24);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+.obs-sound-tile.selected,
+.obs-sound-upload.selected {
+    border-color: rgba(125, 211, 252, 0.9);
+    box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.55), 0 0 0 1px rgba(125, 211, 252, 0.18);
+    background: rgba(14, 116, 144, 0.22);
     color: #f8fafc;
 }
 
 .obs-image-tile.upload {
     opacity: 0.72;
+}
+
+.obs-sound-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+    color: #cbd5e1;
+    flex-wrap: wrap;
+}
+
+.obs-sound-meta p {
+    margin: 0;
+    color: #fda4af;
 }
 
 .obs-submit-btn {
