@@ -74,9 +74,6 @@ const AdminLayout = () => {
                             <img src="https://i.pravatar.cc/150?img=1" alt="admin" />
                             <span>{user?.username || "Admin"}</span>
                         </div>
-                        <button className="topbar-home" onClick={() => navigate("/")}>
-                            🏠 Về trang chủ
-                        </button>
                     </div>
                 </header>
 

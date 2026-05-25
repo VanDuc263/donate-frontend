@@ -53,9 +53,17 @@ export const loginThunk = createAsyncThunk(
         try {
             const res = await login(data);
 
+            const rawUser = res.data.user?.userResponse || res.data.user;
             return {
                 token: res.data.token,
-                user: res.data.user,
+                user: {
+                    userId: rawUser?.userId ?? rawUser?.id,
+                    username: rawUser?.username,
+                    fullName: rawUser?.fullName,
+                    role: rawUser?.role,
+                    email: rawUser?.email,
+                    avatar: rawUser?.avatar,
+                },
             };
         } catch (err) {
             return thunkAPI.rejectWithValue("Sai tài khoản hoặc mật khẩu");
@@ -72,9 +80,17 @@ export const loginGoogleThunk = createAsyncThunk(
         try {
             const res = await loginWithGoogle(credential);
             console.log(res)
+            const rawUser = res.data.user?.userResponse || res.data.user;
             return {
                 token: res.data.token,
-                user: res.data.user,
+                user: {
+                    userId: rawUser?.userId ?? rawUser?.id,
+                    username: rawUser?.username,
+                    fullName: rawUser?.fullName,
+                    role: rawUser?.role,
+                    email: rawUser?.email,
+                    avatar: rawUser?.avatar,
+                },
                 streamer: res.data.streamer,
             };
         } catch (err) {
