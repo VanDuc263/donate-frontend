@@ -659,39 +659,62 @@ const Header = () => {
                         </div>
 
                         {open && (
-                            <div className="dropdown-menu">
-                                <p className="dropdown-name">
-                                    {user?.fullName ||
-                                        user?.username ||
-                                        "Người dùng"}
-                                </p>
+    <div className="dropdown-menu">
+        <p className="dropdown-name">
+            {user?.fullName ||
+                user?.username ||
+                "Người dùng"}
+        </p>
 
-                                <Link to="/account/profile">
-                                    Thông tin
-                                </Link>
+        {String(user?.role || "").replace("ROLE_", "").toUpperCase() === "ADMIN" ? (
+            <>
+                <Link
+                    to="/admin"
+                    onClick={() => setOpen(false)}
+                >
+                    Trang quản trị
+                </Link>
 
-                                <Link to="/account/donations">
-                                    Lịch sử
-                                    donate
-                                </Link>
+                <hr />
+            </>
+        ) : (
+            <>
+                <Link
+                    to="/account/profile"
+                    onClick={() => setOpen(false)}
+                >
+                    Thông tin
+                </Link>
 
-                                <Link to="/account/following">
-                                    Theo dõi
-                                </Link>
+                <Link
+                    to="/account/donations"
+                    onClick={() => setOpen(false)}
+                >
+                    Lịch sử donate
+                </Link>
 
-                                <hr />
+                <Link
+                    to="/account/following"
+                    onClick={() => setOpen(false)}
+                >
+                    Theo dõi
+                </Link>
 
-                                <button
-                                    onClick={() =>
-                                        dispatch(
-                                            logout()
-                                        )
-                                    }
-                                >
-                                    Đăng xuất
-                                </button>
-                            </div>
-                        )}
+                <hr />
+            </>
+        )}
+
+        <button
+            onClick={() => {
+                dispatch(logout());
+                setOpen(false);
+                navigate("/login", { replace: true });
+            }}
+        >
+            Đăng xuất
+        </button>
+    </div>
+)}
                     </div>
                 </div>
             )}
