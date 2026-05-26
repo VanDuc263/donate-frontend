@@ -55,6 +55,9 @@ export const getMyReceivedDonationHistory = (limit: number = 30) => {
 export const donateByWallet = (data : donationPayload) => {
     return axiosClient.post(`/api/donate/wallet`,data);
 };
+export const createPaymentBankQr = (data: donationPayload) => {
+    return axiosClient.post("/api/donate/bank-qr", data);
+};
 export const createPaymentQr = (data: donationPayload) => {
     return axiosClient.post("/api/donate/qr", data);
 };

@@ -1,23 +1,21 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useSelector } from "react-redux";
-import { RootState } from "../../app/store";
 import QRWidget from "../QRWidget";
-import { getQrUrl } from "../../features/streamer/streamerApi";
+import {
+    getBio,
+    updateBio,
+    StreamerBioResponse,
+    SocialPlatform,
+} from "../../features/streamer/streamerApi";
 
 const FALLBACK_THUMB = "/images/streamers/test.png";
 
 const StreamerBioInfo = () => {
-    const user = useSelector((state: RootState) => state.auth.user);
-    const streamer = useSelector((state: RootState) => state.auth.streamer);
+    const [bioData, setBioData] = useState<StreamerBioResponse | null>(null);
 
-    const defaultPageName = streamer?.displayName || user?.username || "";
-    const defaultToken = streamer?.token || user?.username || "";
-    const defaultThumb = streamer?.thumb || FALLBACK_THUMB;
-
-    const [pageName, setPageName] = useState(defaultPageName);
-    const [bio, setBio] = useState(streamer?.bio || "");
+    const [pageName, setPageName] = useState("");
+    const [bio, setBio] = useState("");
     const [category, setCategory] = useState("Streamer");
-    const [thumb, setThumb] = useState(defaultThumb);
+    const [thumb, setThumb] = useState(FALLBACK_THUMB);
     const [thumbName, setThumbName] = useState("");
 
     const [zalo, setZalo] = useState("");
@@ -25,80 +23,169 @@ const StreamerBioInfo = () => {
     const [youtube, setYoutube] = useState("");
     const [tiktok, setTiktok] = useState("");
     const [instagram, setInstagram] = useState("");
-    const [qrUrl, setQrUrl] = useState<string | null>(null);
+
+    const [avatarFile, setAvatarFile] = useState<File | null>(null);
+    const [thumbFile, setThumbFile] = useState<File | null>(null);
+    const [activeImageTarget, setActiveImageTarget] = useState<"thumb" | "avatar" | null>(null);
+    const [avatarPreview, setAvatarPreview] = useState("");
 
     const thumbInputRef = useRef<HTMLInputElement | null>(null);
-    const token = streamer?.token;
+    const avatarInputRef = useRef<HTMLInputElement | null>(null);
+    const mediaWrapRef = useRef<HTMLDivElement | null>(null);
 
-    const donateLink = useMemo(
-        () => `https://zyscan.com/${defaultToken || "your-link"}`,
-        [defaultToken]
-    );
-
-    useEffect(() => {
-        setPageName(defaultPageName);
-        setBio(streamer?.bio || "");
-        setThumb(defaultThumb);
-        setThumbName("");
-    }, [defaultPageName, defaultThumb, streamer?.bio]);
+    const donateLink = useMemo(() => {
+        return `https://zyscan.com/${bioData?.token || "your-link"}`;
+    }, [bioData?.token]);
 
     useEffect(() => {
-        const handleGetQrUrl = async () => {
+        const fetchBio = async () => {
             try {
-                const response = await getQrUrl();
-                setQrUrl(response.data);
+                const response = await getBio();
+                const data = response.data;
+
+                setBioData(data);
+                setPageName(data.displayName || "");
+                setBio(data.bio || "");
+                setThumb(data.thumb || FALLBACK_THUMB);
+
+                const findUrl = (platform: SocialPlatform) => {
+                    return (
+                        data.socialLinks?.find(
+                            (item: any) => item.platform === platform
+                        )?.url || ""
+                    );
+                };
+
+                setFacebook(findUrl("FACEBOOK"));
+                setYoutube(findUrl("YOUTUBE"));
+                setTiktok(findUrl("TIKTOK"));
+                setInstagram(findUrl("INSTAGRAM"));
+                setZalo(findUrl("ZALO"));
             } catch (error) {
                 console.error(error);
             }
         };
 
-        handleGetQrUrl();
-    }, [streamer]);
+        fetchBio();
+    }, []);
 
-    const handleSubmit = () => {
-        alert("Da cap nhat thong tin bio (demo UI)");
+    useEffect(() => {
+        if (!avatarFile) {
+            setAvatarPreview("");
+            return;
+        }
+
+        const previewUrl = URL.createObjectURL(avatarFile);
+        setAvatarPreview(previewUrl);
+
+        return () => {
+            URL.revokeObjectURL(previewUrl);
+        };
+    }, [avatarFile]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (!mediaWrapRef.current?.contains(event.target as Node)) {
+                setActiveImageTarget(null);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+
+    const buildSocialLinks = () => {
+        const links = [
+            { platform: "FACEBOOK" as SocialPlatform, url: facebook },
+            { platform: "YOUTUBE" as SocialPlatform, url: youtube },
+            { platform: "TIKTOK" as SocialPlatform, url: tiktok },
+            { platform: "INSTAGRAM" as SocialPlatform, url: instagram },
+            { platform: "ZALO" as SocialPlatform, url: zalo },
+        ];
+
+        return links
+            .filter((item) => item.url.trim() !== "")
+            .map((item) => ({
+                platform: item.platform,
+                url: item.url.trim(),
+                visible: true,
+            }));
+    };
+
+    const handleSubmit = async () => {
+        try {
+            await updateBio({
+                displayName: pageName,
+                bio,
+                avatar: avatarFile,
+                thumb: thumbFile,
+                socialLinks: buildSocialLinks(),
+            });
+
+            alert("Đã cập nhật");
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFile = e.target.files?.[0];
+        if (!selectedFile) return;
+
+        setAvatarFile(selectedFile);
+        setActiveImageTarget(null);
     };
 
     const handleThumbUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
         if (!selectedFile) return;
 
-        if (!selectedFile.type.startsWith("image/")) {
-            e.target.value = "";
-            return;
-        }
+        setThumbFile(selectedFile);
 
         const reader = new FileReader();
+
         reader.onload = () => {
             if (typeof reader.result === "string") {
                 setThumb(reader.result);
                 setThumbName(selectedFile.name);
+                setActiveImageTarget(null);
             }
         };
+
         reader.readAsDataURL(selectedFile);
-        e.target.value = "";
     };
 
     return (
         <div className="profile-content">
             <div className="profile-card streamer-bio-card">
-                <h2>Thong Tin Bio</h2>
+                <h2>Thông Tin Bio</h2>
 
                 <div className="streamer-bio-grid">
                     <div className="streamer-bio-left">
-                        <div className="streamer-cover-wrap">
-                            <img
-                                className="streamer-cover-image"
-                                src={thumb}
-                                alt="cover"
-                            />
-
+                        <div className="streamer-cover-wrap" ref={mediaWrapRef}>
                             <button
                                 type="button"
-                                className="streamer-cover-upload"
-                                onClick={() => thumbInputRef.current?.click()}
+                                className={`streamer-image-trigger ${activeImageTarget === "thumb" ? "active" : ""}`}
+                                onClick={() => setActiveImageTarget("thumb")}
+                                aria-label="Mở cập nhật ảnh bìa"
                             >
-                                {thumbName ? "Doi thumb khac" : "Tai thumb moi"}
+                                <img
+                                    className="streamer-cover-image"
+                                    src={thumb}
+                                    alt="cover"
+                                />
+                                <span
+                                    className="streamer-image-overlay"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        thumbInputRef.current?.click();
+                                    }}
+                                >
+                                    Đổi ảnh
+                                </span>
                             </button>
 
                             <input
@@ -109,51 +196,70 @@ const StreamerBioInfo = () => {
                                 hidden
                             />
 
-                            <img
-                                className="streamer-cover-avatar"
-                                src={user?.avatar || "/logo192.png"}
-                                alt="avatar"
-                            />
+                            <div className="streamer-avatar-wrap">
+                                <button
+                                    type="button"
+                                    className={`streamer-avatar-trigger ${activeImageTarget === "avatar" ? "active" : ""}`}
+                                    onClick={() => setActiveImageTarget("avatar")}
+                                    aria-label="Mở cập nhật avatar"
+                                >
+                                    <img
+                                        className="streamer-cover-avatar"
+                                        src={avatarPreview || bioData?.avatar || "/logo192.png"}
+                                        alt="avatar"
+                                    />
+                                    <span
+                                        className="streamer-avatar-overlay"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            avatarInputRef.current?.click();
+                                        }}
+                                    >
+                                        Đổi ảnh
+                                    </span>
+                                </button>
+
+                                <input
+                                    ref={avatarInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleAvatarUpload}
+                                    hidden
+                                />
+                            </div>
                         </div>
 
                         {thumbName && (
                             <div className="streamer-thumb-meta">
-                                Da chon: {thumbName}
+                                Đã chọn: {thumbName}
                             </div>
                         )}
 
                         <div className="form-group">
-                            <label>Ten trang</label>
-
+                            <label>Tên trang</label>
                             <input
                                 value={pageName}
                                 onChange={(e) => setPageName(e.target.value)}
-                                placeholder="vd: vduc"
+                                placeholder="vd: Duc Gaming"
                             />
                         </div>
 
                         <div className="form-group">
-                            <label>Lien ket</label>
-
-                            <input
-                                value={donateLink}
-                                readOnly
-                            />
+                            <label>Liên kết</label>
+                            <input value={donateLink} readOnly />
                         </div>
 
                         <div className="form-group">
-                            <label>Gioi thieu</label>
-
+                            <label>Giới thiệu</label>
                             <textarea
                                 value={bio}
                                 onChange={(e) => setBio(e.target.value)}
-                                placeholder="Viet gioi thieu ngan ve ban"
+                                placeholder="Viết giới thiệu ngắn về bạn"
                             />
                         </div>
 
                         <div className="form-group">
-                            <label>Phan loai</label>
-
+                            <label>Phân loại</label>
                             <select
                                 value={category}
                                 onChange={(e) => setCategory(e.target.value)}
@@ -167,62 +273,63 @@ const StreamerBioInfo = () => {
                     <div className="streamer-bio-right">
                         <div className="form-group">
                             <label>Zalo</label>
-
                             <input
                                 value={zalo}
                                 onChange={(e) => setZalo(e.target.value)}
-                                placeholder="Dan link zalo tai day"
+                                placeholder="Dán link Zalo tại đây"
                             />
                         </div>
 
                         <div className="form-group">
                             <label>Facebook</label>
-
                             <input
                                 value={facebook}
                                 onChange={(e) => setFacebook(e.target.value)}
-                                placeholder="Dan link facebook tai day"
+                                placeholder="Dán link Facebook tại đây"
                             />
                         </div>
 
                         <div className="form-group">
                             <label>Youtube</label>
-
                             <input
                                 value={youtube}
                                 onChange={(e) => setYoutube(e.target.value)}
-                                placeholder="Dan link youtube tai day"
+                                placeholder="Dán link Youtube tại đây"
                             />
                         </div>
 
                         <div className="form-group">
                             <label>Tiktok</label>
-
                             <input
                                 value={tiktok}
                                 onChange={(e) => setTiktok(e.target.value)}
-                                placeholder="Dan link tiktok tai day"
+                                placeholder="Dán link Tiktok tại đây"
                             />
                         </div>
 
                         <div className="form-group">
                             <label>Instagram</label>
-
                             <input
                                 value={instagram}
                                 onChange={(e) => setInstagram(e.target.value)}
-                                placeholder="Dan link instagram tai day"
+                                placeholder="Dán link Instagram tại đây"
                             />
                         </div>
 
                         <div className="bio-qr-box">
                             <h3>QR Donate Nhanh</h3>
-                            {token && qrUrl && (
-                                <QRWidget qrUrl={qrUrl} token={token} />
+
+                            {bioData?.token && bioData?.qrUrl && (
+                                <QRWidget
+                                    qrUrl={bioData.qrUrl}
+                                    token={bioData.token}
+                                />
                             )}
-                            {token && !qrUrl && (
+
+                            {bioData?.token && !bioData?.qrUrl && (
                                 <p>
-                                    Streamer chua cau hinh tai khoan ngan hang de tao QR code.
+                                    Streamer chưa cấu hình tài khoản ngân hàng
+                                    để tạo QR code.
                                 </p>
                             )}
                         </div>
@@ -233,7 +340,7 @@ const StreamerBioInfo = () => {
                     className="btn-save bio-submit-btn"
                     onClick={handleSubmit}
                 >
-                    Cap nhat
+                    Cập nhật
                 </button>
             </div>
         </div>

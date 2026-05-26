@@ -72,4 +72,76 @@ export const convertTextToSpeech = (payload : any) => {
     return axiosClient.post(`/api/tts/fpt`,payload);
 
 }
+export type SocialPlatform =
+    | "FACEBOOK"
+    | "YOUTUBE"
+    | "TIKTOK"
+    | "INSTAGRAM"
+    | "ZALO";
+
+export interface StreamerSocialLinkResponse {
+    platform: SocialPlatform;
+    url: string;
+    visible: boolean;
+}
+
+export interface StreamerBioResponse {
+    streamerId: number;
+    displayName: string;
+    avatar: string;
+    thumb: string;
+    bio: string | null;
+    token: string;
+    followers: number;
+    qrUrl: string | null;
+    socialLinks: StreamerSocialLinkResponse[];
+}
+
+export interface UpdateStreamerBioRequest {
+    displayName: string;
+    bio: string;
+    avatar?: File | null;
+    thumb?: File | null;
+
+    socialLinks: {
+        platform: SocialPlatform;
+        url: string;
+        visible: boolean;
+    }[];
+}
+
+export const updateBio = (payload: UpdateStreamerBioRequest) => {
+    const formData = new FormData();
+
+    formData.append("displayName", payload.displayName);
+    formData.append("bio", payload.bio);
+
+    if (payload.avatar) {
+        formData.append("avatar", payload.avatar);
+    }
+
+    if (payload.thumb) {
+        formData.append("thumb", payload.thumb);
+    }
+
+    formData.append(
+        "socialLinks",
+        JSON.stringify(payload.socialLinks)
+    );
+
+    return axiosClient.put(
+        "/api/streamers/me/bio",
+        formData,
+        {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        }
+    );
+};
+
+export const getBio = () => {
+    return axiosClient.get<StreamerBioResponse>("/api/streamers/me/bio");
+};
+
 

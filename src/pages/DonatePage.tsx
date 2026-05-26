@@ -1,49 +1,6 @@
-// import React from "react";
-// import "../styles/donate_page.css";
-// import {useNavigate} from "react-router-dom";
-
-// const streamers = [
-//     { name: "MixiGaming", img: "https://i.pravatar.cc/150?img=1", money: "246M", rank: 1 },
-//     { name: "Tabi", img: "https://i.pravatar.cc/150?img=2", money: "51M", rank: 2 },
-//     { name: "Hướng Mêu", img: "https://i.pravatar.cc/150?img=3", money: "38M", rank: 3 },
-//     { name: "Độ Mixi Clone", img: "https://i.pravatar.cc/150?img=4", money: "20M" },
-// ];
-
-// const DonatePage = () => {
-//     const navigate = useNavigate();
-//     return (
-//         <div className="donate-container">
-//             {/* Header */}
-//             <div className="donate-header">
-//                 <h1>💙 Donate cho Streamer</h1>
-//             </div>
-
-//             {/* Search */}
-//             <div className="search-box">
-//                 <input placeholder="Nhập tên streamer để tìm kiếm..." />
-//             </div>
-
-//             {/* Suggested */}
-//             <div className="suggest-section">
-//                 <h2>✨ Streamer gợi ý</h2>
-
-//                 <div className="streamer-grid">
-//                     {streamers.map((s, i) => (
-//                         <div key={i} className="streamer-card"  onClick={() => navigate(`/streamer/${i}`)}>
-//                             <img src={s.img} alt={s.name} />
-//                             <span>{s.name}</span>
-//                         </div>
-//                     ))}
-//                 </div>
-//             </div>
-//         </div>
-//     );
-// };
-
-
-// export default DonatePage;
 import React, { useEffect, useState } from "react";
-import "../styles/donate_page.css";
+import Icon from "@mdi/react";
+import { mdiAccountHeart, mdiMagnify, mdiQrcode, mdiShieldCheck } from "@mdi/js";
 import { useNavigate } from "react-router-dom";
 import {
     getTopStreamer,
@@ -51,6 +8,25 @@ import {
     SearchStreamerResponse,
     TopStreamerResponse,
 } from "../features/streamer/streamerApi";
+import "../styles/donate_page.css";
+
+const donateHighlights = [
+    {
+        icon: mdiAccountHeart,
+        title: "Ủng hộ nhanh",
+        text: "Tìm đúng creator và chuyển đến trang donate chỉ trong vài giây.",
+    },
+    {
+        icon: mdiQrcode,
+        title: "Hỗ trợ QR",
+        text: "Người xem có thể donate thuận tiện hơn trên điện thoại.",
+    },
+    {
+        icon: mdiShieldCheck,
+        title: "Rõ ràng hơn",
+        text: "Thông tin creator và luồng thao tác được trình bày dễ hiểu hơn.",
+    },
+];
 
 const DonatePage = () => {
     const navigate = useNavigate();
@@ -110,51 +86,79 @@ const DonatePage = () => {
         },
         index?: number
     ) => (
-        <div
+        <button
             key={streamer.streamerId}
+            type="button"
             className="streamer-card"
             onClick={() => navigate(`/streamer/${streamer.token}`)}
         >
-            <img
-                src={streamer.avatar || "https://i.pravatar.cc/150?img=1"}
-                alt={streamer.displayName}
-            />
-            <span>
-                {index !== undefined ? `#${index + 1} ` : ""}
-                {streamer.displayName}
-            </span>
-        </div>
+            <div className="streamer-card-avatar">
+                <img
+                    src={streamer.avatar || "https://i.pravatar.cc/150?img=1"}
+                    alt={streamer.displayName}
+                />
+            </div>
+            <div className="streamer-card-meta">
+                {index !== undefined && <small>Top #{index + 1}</small>}
+                <strong>{streamer.displayName}</strong>
+                <span>Đi đến trang donate</span>
+            </div>
+        </button>
     );
 
     return (
         <div className="donate-container">
-            <div className="donate-header">
-                <h1>💙 Donate cho Streamer</h1>
-            </div>
+            <section className="donate-hero">
+                <div className="donate-header">
+                    <span className="donate-badge">ZyScan Donate</span>
+                    <h1>Tìm creator bạn muốn ủng hộ</h1>
+                    <p>Chọn đúng streamer hoặc creator để bắt đầu donate nhanh, rõ ràng và dễ thao tác hơn.</p>
+                </div>
 
-            <div className="search-box">
-                <input
-                    value={keyword}
-                    onChange={(e) => setKeyword(e.target.value)}
-                    placeholder="Nhập tên streamer để tìm kiếm..."
-                />
-            </div>
+                <div className="search-box">
+                    <div className="search-field">
+                        <Icon path={mdiMagnify} size={0.95} />
+                        <input
+                            value={keyword}
+                            onChange={(e) => setKeyword(e.target.value)}
+                            placeholder="Nhập tên streamer hoặc creator..."
+                        />
+                    </div>
+                </div>
+
+                <div className="donate-highlights">
+                    {donateHighlights.map((item) => (
+                        <article key={item.title} className="donate-highlight-card">
+                            <div className="donate-highlight-icon">
+                                <Icon path={item.icon} size={1} />
+                            </div>
+                            <div>
+                                <h3>{item.title}</h3>
+                                <p>{item.text}</p>
+                            </div>
+                        </article>
+                    ))}
+                </div>
+            </section>
 
             {loading && (
                 <div className="suggest-section">
-                    <p>Đang tìm kiếm...</p>
+                    <p className="donate-status">Đang tìm kiếm...</p>
                 </div>
             )}
 
             {!loading && keyword.trim() !== "" && searched && results.length === 0 && (
                 <div className="suggest-section">
-                    <p>Không tìm thấy streamer phù hợp.</p>
+                    <p className="donate-status">Không tìm thấy streamer phù hợp.</p>
                 </div>
             )}
 
             {!loading && keyword.trim() !== "" && results.length > 0 && (
                 <div className="suggest-section">
-                    <h2>🔎 Kết quả tìm kiếm</h2>
+                    <div className="suggest-header">
+                        <h2>Kết quả tìm kiếm</h2>
+                        <span>{results.length} kết quả</span>
+                    </div>
                     <div className="streamer-grid">
                         {results.map((s) => renderCard(s))}
                     </div>
@@ -163,7 +167,10 @@ const DonatePage = () => {
 
             {!keyword.trim() && (
                 <div className="suggest-section">
-                    <h2>✨ Streamer gợi ý</h2>
+                    <div className="suggest-header">
+                        <h2>Streamer gợi ý</h2>
+                        <span>{topStreamers.length} creator nổi bật</span>
+                    </div>
                     <div className="streamer-grid">
                         {topStreamers.map((s, i) => renderCard(s, i))}
                     </div>

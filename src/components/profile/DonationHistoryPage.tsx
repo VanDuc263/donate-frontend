@@ -85,8 +85,8 @@ const DonationHistoryPage = () => {
 
     const description = useMemo(() => {
         return activeTab === "received"
-            ? "Hiển thị các khoản donate bạn đã nhận thành công."
-            : "Hiển thị các khoản donate bạn đã gửi thành công.";
+            ? "Xem lại các khoản donate bạn đã nhận theo cách rõ ràng và dễ theo dõi hơn."
+            : "Xem lại các khoản donate bạn đã gửi theo cách rõ ràng và dễ theo dõi hơn.";
     }, [activeTab]);
 
     const emptyText = useMemo(() => {

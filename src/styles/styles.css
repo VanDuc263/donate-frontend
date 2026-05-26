@@ -388,19 +388,19 @@ nav a:hover {
 .dropdown-menu {
     position: absolute;
     top: 60px;
-    right: 0;
+    right: 10px;
 
-    background: rgba(2, 6, 23, 0.95);
-    backdrop-filter: blur(14px);
+    background: #111827;
+    backdrop-filter: blur(8px);
 
     border-radius: 14px;
-    padding: 14px;
+    padding: 8px 6px 6px;
 
-    min-width: 220px;
+    width: min(230px, calc(100vw - 20px));
 
-    border: 1px solid rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.06);
 
-    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.28);
     z-index: 100;
 
     animation: fadeIn 0.2s ease;
@@ -409,53 +409,128 @@ nav a:hover {
 .dropdown-name {
     font-weight: 600;
     margin-bottom: 10px;
-    color: #38bdf8;
+    color: #e2e8f0;
 }
 
-/* LINKS */
-.dropdown-menu a {
+.dropdown-account {
+    padding: 8px 10px 10px;
+    margin: 0 4px 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.dropdown-account-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f8fafc;
+    margin-bottom: 2px;
+}
+
+.dropdown-account-email {
     display: block;
-    padding: 10px;
-    border-radius: 8px;
-
-    color: white;
-    opacity: 0.85;
-
-    transition: 0.2s;
+    font-size: 11px;
+    color: rgba(226, 232, 240, 0.7);
+    line-height: 1.35;
+    word-break: break-word;
 }
 
-.dropdown-menu a:hover {
-    background: #1e293b;
-    color: #38bdf8;
-    opacity: 1;
-}
-
-/* DIVIDER */
 .dropdown-menu hr {
     border: none;
     height: 1px;
-    background: rgba(255,255,255,0.08);
-    margin: 10px 0;
+    background: rgba(255,255,255,0.06);
+    margin: 8px 0 0;
 }
 
-/* LOGOUT */
-.dropdown-menu button {
+.dropdown-link-icon {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: rgba(55, 65, 81, 0.82);
+    color: #e5e7eb;
+    flex-shrink: 0;
+}
+
+.dropdown-link-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+}
+
+.dropdown-link-copy strong {
+    font-size: 13px;
+    color: #f8fafc;
+    font-weight: 500;
+}
+
+.dropdown-section {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dropdown-section + .dropdown-section {
+    margin-top: 2px;
+}
+
+.dropdown-section-label {
+    margin: 8px 10px 4px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: rgba(156, 163, 175, 0.85);
+}
+
+.dropdown-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    color: #f8fafc;
+    background: transparent;
+    border: 1px solid transparent;
+    transition: 0.2s ease;
+}
+
+.dropdown-link:hover {
+    background: rgba(55, 65, 81, 0.55);
+    border-color: transparent;
+    color: #f8fafc;
+}
+
+.dropdown-link:hover .dropdown-link-icon {
+    background: rgba(75, 85, 99, 0.95);
+    color: #ffffff;
+}
+
+.dropdown-logout {
     width: 100%;
-    padding: 10px;
-
-    border: none;
-    border-radius: 8px;
-
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    color: white;
-
+    margin-top: 8px;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: transparent;
+    color: #fca5a5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     cursor: pointer;
-    transition: 0.2s;
+    transition: 0.2s ease;
 }
 
-.dropdown-menu button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 0 10px rgba(239,68,68,0.6);
+.dropdown-logout:hover {
+    background: rgba(127, 29, 29, 0.18);
+    border-color: transparent;
+}
+
+.dropdown-menu > .dropdown-name,
+.dropdown-menu > a,
+.dropdown-menu > button:not(.dropdown-logout) {
+    display: none;
 }
 /* ===== HERO ===== */
 .hero h2 {
@@ -1544,15 +1619,25 @@ body {
     gap: 14px;
 }
 
+.faq-entry {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(24, 35, 104, 0.5);
+}
+
+.faq-entry.open {
+    background: rgba(18, 27, 87, 0.72);
+}
+
 .faq-item {
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 14px 16px;
-    border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background: rgba(24, 35, 104, 0.5);
+    border: none;
+    background: transparent;
     color: #fff;
     font-size: 13px;
     cursor: pointer;
@@ -1562,6 +1647,26 @@ body {
 .faq-chevron {
     opacity: 0.8;
     font-size: 18px;
+}
+
+.faq-answer {
+    padding: 0 16px 16px;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.faq-answer p {
+    margin: 0;
+}
+
+.faq-answer p + p {
+    margin-top: 10px;
+}
+
+.faq-summary {
+    color: #fff;
+    font-weight: 700;
 }
 
 .site-footer {

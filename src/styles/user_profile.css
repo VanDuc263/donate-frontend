@@ -191,64 +191,70 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
-    margin-bottom: 18px;
+    margin-bottom: 20px;
 }
 
 .wallet-summary-card,
 .wallet-action-card,
 .wallet-history-card {
-    border-radius: 18px;
+    border-radius: 14px;
     border: 1px solid rgba(148, 163, 184, 0.14);
-    background: rgba(8, 15, 29, 0.78);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    background: #0f172a;
+    box-shadow: none;
 }
 
 .wallet-summary-card {
-    padding: 20px;
+    padding: 16px 18px;
 }
 
 .wallet-summary-card.primary {
-    background: linear-gradient(135deg, rgba(14, 165, 233, 0.18), rgba(8, 15, 29, 0.92));
+    background: #111c33;
 }
 
 .wallet-summary-card span {
     display: block;
     color: #8ea4c1;
-    font-size: 13px;
-    margin-bottom: 10px;
+    font-size: 12px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
 }
 
 .wallet-summary-card strong {
     display: block;
     color: #f8fafc;
-    font-size: 30px;
+    font-size: 26px;
     line-height: 1.05;
-    margin-bottom: 10px;
-}
-
-.wallet-summary-card p {
-    color: #a8b7ca;
-    line-height: 1.55;
 }
 
 .profile-wallet-grid {
     display: grid;
     grid-template-columns: minmax(280px, 0.95fr) minmax(0, 1.05fr);
-    gap: 18px;
+    gap: 16px;
 }
 
 .wallet-action-card,
 .wallet-history-card {
-    padding: 20px;
+    padding: 18px;
+}
+
+.wallet-card-title {
+    margin-bottom: 12px;
+}
+
+.wallet-card-title h3 {
+    margin: 0;
+    color: #f8fafc;
+    font-size: 17px;
 }
 
 .wallet-action-tabs {
     display: inline-flex;
     gap: 6px;
-    padding: 4px;
-    margin-bottom: 18px;
+    padding: 3px;
+    margin-bottom: 14px;
     border-radius: 999px;
-    background: rgba(15, 23, 42, 0.88);
+    background: #111827;
     border: 1px solid rgba(148, 163, 184, 0.14);
 }
 
@@ -256,27 +262,49 @@
     border: none;
     background: transparent;
     color: #cbd5e1;
-    padding: 10px 16px;
+    padding: 9px 14px;
     border-radius: 999px;
     cursor: pointer;
-    font-weight: 700;
+    font-weight: 600;
     transition: 0.2s;
 }
 
 .wallet-action-tabs button.active {
-    background: linear-gradient(135deg, #f8fafc, #dbeafe);
+    background: #e2e8f0;
     color: #0f172a;
-    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
+    box-shadow: none;
+}
+
+.wallet-quick-amounts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: -2px 0 14px;
+}
+
+.wallet-quick-amounts button {
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: #111827;
+    color: #e2e8f0;
+    border-radius: 999px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: 0.2s;
+}
+
+.wallet-quick-amounts button:hover {
+    background: #1e293b;
 }
 
 .wallet-action-btn {
     width: 100%;
     border: none;
     border-radius: 12px;
-    padding: 13px 16px;
-    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+    padding: 12px 16px;
+    background: #38bdf8;
     color: #082032;
-    font-weight: 800;
+    font-weight: 700;
     cursor: pointer;
     transition: 0.2s;
 }
@@ -286,17 +314,17 @@
 }
 
 .wallet-inline-message {
-    margin-top: 12px;
-    color: #bae6fd;
-    font-size: 14px;
+    margin-top: 10px;
+    color: #cbd5e1;
+    font-size: 13px;
 }
 
 .wallet-history-head {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
 }
 
 .wallet-history-head h4 {
@@ -306,13 +334,14 @@
 
 .wallet-history-head span {
     color: #8ea4c1;
-    font-size: 13px;
+    font-size: 12px;
+    white-space: nowrap;
 }
 
 .wallet-history-list {
-    overflow: hidden;
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .wallet-history-item {
@@ -320,23 +349,25 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 16px;
-    background: rgba(2, 6, 23, 0.08);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.wallet-history-item:last-child {
-    border-bottom: none;
+    padding: 13px 14px;
+    background: #111827;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    border-radius: 12px;
 }
 
 .wallet-history-item strong {
     color: #f8fafc;
 }
 
+.wallet-history-main {
+    min-width: 0;
+}
+
 .wallet-history-item p {
-    margin: 6px 0 0;
+    margin: 4px 0 0;
     color: #a8b7ca;
-    line-height: 1.5;
+    line-height: 1.4;
+    font-size: 13px;
 }
 
 .wallet-history-amount {
@@ -359,7 +390,7 @@
 
 .wallet-history-amount small {
     display: block;
-    margin-top: 6px;
+    margin-top: 4px;
     color: #8ea4c1;
     font-size: 12px;
 }
@@ -500,6 +531,22 @@
     margin-bottom: 56px;
 }
 
+.streamer-image-trigger,
+.streamer-avatar-trigger {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.streamer-image-trigger {
+    position: relative;
+    width: 100%;
+    display: block;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
 .streamer-cover-image {
     width: 100%;
     height: 180px;
@@ -508,32 +555,28 @@
     border-radius: 12px;
 }
 
-.streamer-cover-upload {
+.streamer-image-overlay {
     position: absolute;
-    right: 14px;
-    bottom: 14px;
+    inset: 0;
     z-index: 3;
-    border: 0;
-    border-radius: 999px;
-    background: rgba(15, 23, 42, 0.88);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.58);
     color: #f8fafc;
-    padding: 8px 14px;
-    font-size: 13px;
+    font-size: 24px;
     font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 8px 20px rgba(2, 6, 23, 0.35);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
 }
 
-.streamer-cover-upload:hover {
-    background: rgba(30, 41, 59, 0.96);
+.streamer-image-trigger.active .streamer-image-overlay {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .streamer-cover-avatar {
-    position: absolute;
-    left: 50%;
-    bottom: -42px;
-    transform: translateX(-50%);
-    z-index: 2;
     width: 84px;
     height: 84px;
     border-radius: 50%;
@@ -541,6 +584,47 @@
     box-shadow: 0 8px 20px rgba(2, 6, 23, 0.45);
     object-fit: cover;
     background: #0f172a;
+    display: block;
+}
+
+.streamer-avatar-wrap {
+    position: absolute;
+    left: 50%;
+    bottom: -42px;
+    transform: translateX(-50%);
+    z-index: 2;
+}
+
+.streamer-avatar-trigger {
+    position: relative;
+    display: block;
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.streamer-avatar-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.7);
+    color: #f8fafc;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.streamer-avatar-trigger.active .streamer-avatar-overlay {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .streamer-bio-left .form-group:first-of-type {
@@ -1709,11 +1793,9 @@
 /* ===== DONATION HISTORY ===== */
 .donation-history-card {
     min-height: 420px;
-    background:
-        radial-gradient(circle at top right, rgba(56, 189, 248, 0.12), transparent 30%),
-        linear-gradient(180deg, #132033, #0b1220);
+    background: #0f172a;
     border: 1px solid rgba(148, 163, 184, 0.16);
-    box-shadow: 0 24px 60px rgba(2, 6, 23, 0.28);
+    box-shadow: none;
 }
 
 .donation-history-head {
@@ -1741,39 +1823,38 @@
     display: inline-flex;
     gap: 6px;
     padding: 4px;
-    margin-top: 14px;
+    margin-bottom: 18px;
     border-radius: 999px;
-    background: rgba(15, 23, 42, 0.88);
+    background: #111827;
     border: 1px solid rgba(148, 163, 184, 0.14);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .donation-history-tabs button {
     border: none;
     background: transparent;
     color: #cbd5e1;
-    padding: 10px 16px;
+    padding: 9px 14px;
     border-radius: 999px;
     cursor: pointer;
-    font-weight: 700;
+    font-weight: 600;
     transition: 0.2s;
 }
 
 .donation-history-tabs button.active {
-    background: linear-gradient(135deg, #f8fafc, #dbeafe);
+    background: #e2e8f0;
     color: #0f172a;
-    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
+    box-shadow: none;
 }
 
 .donation-count {
-    padding: 9px 14px;
+    padding: 8px 12px;
     border-radius: 999px;
-    background: rgba(8, 47, 73, 0.92);
-    border: 1px solid rgba(56, 189, 248, 0.2);
-    color: #7dd3fc;
+    background: #111827;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    color: #cbd5e1;
     font-size: 13px;
     white-space: nowrap;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .donation-history-list {
@@ -1796,7 +1877,7 @@
 
 .dh-pagination button {
     border: 1px solid rgba(148, 163, 184, 0.18);
-    background: rgba(15, 23, 42, 0.88);
+    background: #111827;
     color: #e2e8f0;
     padding: 10px 14px;
     border-radius: 12px;
@@ -1806,7 +1887,7 @@
 }
 
 .dh-pagination button:hover:not(:disabled) {
-    background: rgba(30, 41, 59, 0.96);
+    background: #1e293b;
 }
 
 .dh-pagination button:disabled {
@@ -1816,12 +1897,9 @@
 
 .dh-table-shell {
     overflow: hidden;
-    border-radius: 20px;
+    border-radius: 14px;
     border: 1px solid rgba(148, 163, 184, 0.14);
-    background: rgba(8, 15, 29, 0.82);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.03),
-        0 16px 32px rgba(2, 6, 23, 0.2);
+    background: #111827;
 }
 
 .dh-table-body {
@@ -1837,21 +1915,21 @@
 }
 
 .dh-table-head {
-    padding: 16px 20px;
-    color: #8ea4c1;
+    padding: 14px 18px;
+    color: #94a3b8;
     font-size: 12px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.12em;
-    background: linear-gradient(180deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
+    letter-spacing: 0.08em;
+    background: #0f172a;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .dh-item {
-    padding: 18px 20px;
-    background: rgba(2, 6, 23, 0.08);
+    padding: 16px 18px;
+    background: #111827;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    transition: 0.2s;
+    transition: background 0.2s ease;
 }
 
 .dh-item:last-child {
@@ -1859,7 +1937,7 @@
 }
 
 .dh-item:hover {
-    background: linear-gradient(90deg, rgba(14, 165, 233, 0.08), rgba(59, 130, 246, 0.03));
+    background: #162033;
 }
 
 .dh-cell {
@@ -1869,16 +1947,15 @@
 .dh-user {
     font-weight: 700;
     color: #f8fafc;
-    letter-spacing: 0.01em;
 }
 
 .dh-user a {
-    color: #7dd3fc;
+    color: #38bdf8;
     text-decoration: none;
 }
 
 .dh-user a:hover {
-    color: #bae6fd;
+    color: #7dd3fc;
 }
 
 .dh-amount {
@@ -1890,19 +1967,19 @@
 
 .dh-content {
     color: #dbe4f0;
-    line-height: 1.6;
+    line-height: 1.55;
     word-break: break-word;
 }
 
 .dh-time {
-    color: #a8b7ca;
+    color: #94a3b8;
     font-variant-numeric: tabular-nums;
 }
 
 .dh-row-meta {
     grid-column: 1 / -1;
     margin-top: 2px;
-    padding-top: 12px;
+    padding-top: 10px;
     font-size: 12px;
     color: #7f93ab;
     border-top: 1px dashed rgba(255, 255, 255, 0.08);
@@ -1943,12 +2020,13 @@
         display: flex;
     }
 
-    .dh-table-shell {
-        border-radius: 16px;
-    }
-
     .dh-pagination {
         justify-content: space-between;
+    }
+
+    .wallet-history-item {
+        flex-direction: column;
+        align-items: flex-start;
     }
 
     .dh-table-head {
@@ -1969,6 +2047,6 @@
         font-size: 11px;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.1em;
+        letter-spacing: 0.08em;
     }
 }

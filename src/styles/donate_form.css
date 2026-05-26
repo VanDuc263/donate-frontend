@@ -172,3 +172,37 @@
         transform: scale(1);
     }
 }
+
+.qr-donate-simple {
+    display: block;
+}
+
+.qr-donate-simple-form,
+.qr-donate-simple-result {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.qr-donate-simple-note,
+.qr-donate-simple-meta p {
+    color: #ccc;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.qr-donate-simple-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.qr-donate-reset-btn {
+    background: #333 !important;
+}
+
+@media (max-width: 720px) {
+    .modal-container {
+        width: calc(100vw - 24px);
+    }
+}

@@ -4,7 +4,17 @@ import { RootState } from "../app/store";
 import { logout } from "../features/auth/authSlice";
 import { useState, useRef, useEffect } from "react";
 import Icon from "@mdi/react";
-import { mdiMagnify, mdiBellOutline, mdiPlusCircleOutline } from "@mdi/js";
+import {
+    mdiAccountCircleOutline,
+    mdiBellOutline,
+    mdiCogOutline,
+    mdiEyeOutline,
+    mdiHeartOutline,
+    mdiHistory,
+    mdiLogout,
+    mdiMagnify,
+    mdiPlusCircleOutline,
+} from "@mdi/js";
 import { useAppSelector } from "../hooks/useAppSelector";
 import {
     searchStreamers,
@@ -41,6 +51,10 @@ const Header = () => {
 
     const user = useAppSelector(
         (state) => state.auth.user
+    );
+
+    const streamer = useAppSelector(
+        (state) => state.auth.streamer
     );
 
     const { wallet } = useAppSelector(
@@ -308,6 +322,55 @@ const Header = () => {
                 navigate(item.redirectUrl);
             }
         };
+
+    const closeAccountMenu = () => {
+        setOpen(false);
+    };
+
+    const handleLogout = () => {
+        dispatch(logout());
+        closeAccountMenu();
+        navigate("/login");
+    };
+
+    const quickMenuItems = [
+        {
+            to: "/account/profile",
+            icon: mdiAccountCircleOutline,
+            title: "Ho so",
+        },
+        {
+            to: "/account/donations",
+            icon: mdiHistory,
+            title: "Lich su donate",
+        },
+        {
+            to: "/account/following",
+            icon: mdiHeartOutline,
+            title: "Dang theo doi",
+        },
+    ];
+
+    const streamerMenuItems = streamer?.token
+        ? [
+              {
+                  to: `/streamer/${streamer.token}`,
+                  icon: mdiEyeOutline,
+                  title: "Trang ZyScan",
+              },
+              {
+                  to: "/account/profile/bio",
+                  icon: mdiCogOutline,
+                  title: "Cai dat streamer",
+              },
+          ]
+        : [
+              {
+                  to: "/account/create-streamer",
+                  icon: mdiPlusCircleOutline,
+                  title: "Tao trang ZyScan",
+              },
+          ];
 
     return (
         <header className="header">
@@ -644,7 +707,9 @@ const Header = () => {
                         ref={menuRef}
                     >
                         <div
-                            className="user-trigger"
+                            className={`user-trigger ${
+                                open ? "active" : ""
+                            }`}
                             onClick={() =>
                                 setOpen(!open)
                             }
@@ -654,12 +719,77 @@ const Header = () => {
                                     user?.avatar ||
                                     "https://i.pravatar.cc/100?img=5"
                                 }
-                                alt=""
+                                alt="Avatar tai khoan"
                             />
                         </div>
 
                         {open && (
                             <div className="dropdown-menu">
+                                <div className="dropdown-account">
+                                    <p className="dropdown-account-name">
+                                        {user?.fullName ||
+                                            user?.username ||
+                                            "Nguoi dung"}
+                                    </p>
+
+                                    <span className="dropdown-account-email">
+                                        {user?.email ||
+                                            "Tai khoan ZyScan"}
+                                    </span>
+                                </div>
+
+                                <div className="dropdown-section">
+                                    {quickMenuItems.map((item) => (
+                                        <Link
+                                            key={item.to}
+                                            to={item.to}
+                                            className="dropdown-link"
+                                            onClick={closeAccountMenu}
+                                        >
+                                            <span className="dropdown-link-icon">
+                                                <Icon
+                                                    path={item.icon}
+                                                    size={0.85}
+                                                />
+                                            </span>
+
+                                            <span className="dropdown-link-copy">
+                                                <strong>
+                                                    {item.title}
+                                                </strong>
+                                            </span>
+                                        </Link>
+                                    ))}
+                                </div>
+
+                                <div className="dropdown-section-label">
+                                    Creator tools
+                                </div>
+
+                                <div className="dropdown-section">
+                                    {streamerMenuItems.map((item) => (
+                                        <Link
+                                            key={item.to}
+                                            to={item.to}
+                                            className="dropdown-link"
+                                            onClick={closeAccountMenu}
+                                        >
+                                            <span className="dropdown-link-icon">
+                                                <Icon
+                                                    path={item.icon}
+                                                    size={0.85}
+                                                />
+                                            </span>
+
+                                            <span className="dropdown-link-copy">
+                                                <strong>
+                                                    {item.title}
+                                                </strong>
+                                            </span>
+                                        </Link>
+                                    ))}
+                                </div>
+
                                 <p className="dropdown-name">
                                     {user?.fullName ||
                                         user?.username ||
@@ -680,6 +810,18 @@ const Header = () => {
                                 </Link>
 
                                 <hr />
+
+                                <button
+                                    type="button"
+                                    className="dropdown-logout"
+                                    onClick={handleLogout}
+                                >
+                                    <Icon
+                                        path={mdiLogout}
+                                        size={0.85}
+                                    />
+                                    <span>Dang xuat</span>
+                                </button>
 
                                 <button
                                     onClick={() =>
