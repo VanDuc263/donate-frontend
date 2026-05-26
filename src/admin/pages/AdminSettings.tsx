@@ -1,17 +1,64 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../../app/store";
+import {
+    AdminPaymentMethod,
+    createAdminPaymentMethod,
+    deleteAdminPaymentMethod,
+    fetchAdminPaymentMethods,
+    updateAdminPaymentMethod,
+} from "../../features/admin/adminSlice";
+
+const blank = {
+    providerType: "BANK",
+    bankCode: "",
+    accountNumber: "",
+    accountName: "",
+    qrTemplate: "compact2",
+    qrImageUrl: "",
+    active: true,
+};
 
 const AdminSettings = () => {
-    const [minDonate, setMinDonate] = useState("5000");
-    const [maxDonate, setMaxDonate] = useState("10000000");
-    const [platformFee, setPlatformFee] = useState("2.5");
-    const [maintenanceMode, setMaintenanceMode] = useState(false);
-    const [emailNotif, setEmailNotif] = useState(true);
-    const [autoApprove, setAutoApprove] = useState(false);
-    const [saved, setSaved] = useState(false);
+    const dispatch = useDispatch<AppDispatch>();
+    const { paymentMethods, loading, saving, error } = useSelector((s: RootState) => s.admin);
+    const [editing, setEditing] = useState<AdminPaymentMethod | null>(null);
+    const [showForm, setShowForm] = useState(false);
+    const [form, setForm] = useState<any>(blank);
 
-    const handleSave = () => {
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2500);
+    useEffect(() => { dispatch(fetchAdminPaymentMethods()); }, [dispatch]);
+
+    const openCreate = () => {
+        setEditing(null);
+        setForm(blank);
+        setShowForm(true);
+    };
+
+    const openEdit = (m: AdminPaymentMethod) => {
+        setEditing(m);
+        setForm({
+            providerType: m.providerType || "BANK",
+            bankCode: m.bankCode || "",
+            accountNumber: m.accountNumber || "",
+            accountName: m.accountName || "",
+            qrTemplate: m.qrTemplate || "",
+            qrImageUrl: m.qrImageUrl || "",
+            active: !!m.active,
+        });
+        setShowForm(true);
+    };
+
+    const submit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (editing) await dispatch(updateAdminPaymentMethod({ id: editing.id, data: form }));
+        else await dispatch(createAdminPaymentMethod(form));
+        setShowForm(false);
+        setEditing(null);
+    };
+
+    const remove = async (m: AdminPaymentMethod) => {
+        if (!window.confirm(`Xóa phương thức ${m.providerType} - ${m.accountNumber}?`)) return;
+        await dispatch(deleteAdminPaymentMethod(m.id));
     };
 
     return (
@@ -19,145 +66,76 @@ const AdminSettings = () => {
             <div className="as-header">
                 <div>
                     <h2>⚙️ Cài đặt hệ thống</h2>
-                    <p>Quản lý các thông số vận hành của ZyScan</p>
+                    <p>Quản lý bảng system_payment_methods để tạo QR nạp ví / donate</p>
                 </div>
-                <button className="as-add-btn" onClick={handleSave}>
-                    💾 Lưu tất cả
-                </button>
+                <button className="as-add-btn" onClick={openCreate}>+ Thêm phương thức</button>
             </div>
 
-            {saved && (
-                <div className="settings-saved-toast">✅ Đã lưu cài đặt thành công!</div>
-            )}
+            {error && <div className="admin-error small">⚠️ {error}</div>}
 
             <div className="settings-grid">
-                {/* Donate Settings */}
-                <div className="settings-card">
-                    <h3>💰 Cài đặt Donate</h3>
-                    <div className="setting-field">
-                        <label>Số tiền tối thiểu (đ)</label>
-                        <input
-                            type="number"
-                            value={minDonate}
-                            onChange={e => setMinDonate(e.target.value)}
-                            className="setting-input"
-                        />
-                    </div>
-                    <div className="setting-field">
-                        <label>Số tiền tối đa (đ)</label>
-                        <input
-                            type="number"
-                            value={maxDonate}
-                            onChange={e => setMaxDonate(e.target.value)}
-                            className="setting-input"
-                        />
-                    </div>
-                    <div className="setting-field">
-                        <label>Phí nền tảng (%)</label>
-                        <input
-                            type="number"
-                            value={platformFee}
-                            onChange={e => setPlatformFee(e.target.value)}
-                            className="setting-input"
-                            step="0.1"
-                            min="0"
-                            max="20"
-                        />
-                        <p className="field-hint">Hiện tại: {platformFee}% mỗi giao dịch thành công</p>
+                <div className="settings-card wide-card">
+                    <h3>🏦 System payment methods</h3>
+                    <div className="as-table-wrap flat">
+                        <table className="as-table">
+                            <thead>
+                            <tr>
+                                <th>ID</th><th>Provider</th><th>Bank</th><th>Số tài khoản</th><th>Chủ tài khoản</th><th>Active</th><th>QR URL</th><th>Thao tác</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {loading ? <tr><td colSpan={8}>Đang tải...</td></tr> : paymentMethods.map(m => (
+                                <tr key={m.id} className="as-row">
+                                    <td>#{m.id}</td>
+                                    <td>{m.providerType}</td>
+                                    <td>{m.bankCode || "—"}</td>
+                                    <td>{m.accountNumber || "—"}</td>
+                                    <td>{m.accountName || "—"}</td>
+                                    <td>{m.active ? "🟢 Bật" : "⚪ Tắt"}</td>
+                                    <td className="qr-cell">{m.qrImageUrl || "—"}</td>
+                                    <td className="as-actions-cell">
+                                        <button className="act-btn view" onClick={() => openEdit(m)}>Sửa</button>
+                                        <button className="act-btn ban" onClick={() => remove(m)}>Xóa</button>
+                                    </td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
-                {/* System toggles */}
                 <div className="settings-card">
-                    <h3>🔧 Hệ thống</h3>
-                    <div className="setting-toggle-row">
-                        <div>
-                            <p className="toggle-title">Chế độ bảo trì</p>
-                            <p className="toggle-sub">Tạm khóa toàn bộ giao dịch</p>
-                        </div>
-                        <div
-                            className={`big-toggle ${maintenanceMode ? "on danger" : ""}`}
-                            onClick={() => setMaintenanceMode(v => !v)}
-                        >
-                            <div className="big-toggle-ball" />
-                        </div>
-                    </div>
-                    <div className="setting-toggle-row">
-                        <div>
-                            <p className="toggle-title">Email thông báo</p>
-                            <p className="toggle-sub">Gửi email cho admin khi có sự kiện</p>
-                        </div>
-                        <div
-                            className={`big-toggle ${emailNotif ? "on" : ""}`}
-                            onClick={() => setEmailNotif(v => !v)}
-                        >
-                            <div className="big-toggle-ball" />
-                        </div>
-                    </div>
-                    <div className="setting-toggle-row">
-                        <div>
-                            <p className="toggle-title">Tự động duyệt streamer</p>
-                            <p className="toggle-sub">Duyệt tài khoản streamer tự động</p>
-                        </div>
-                        <div
-                            className={`big-toggle ${autoApprove ? "on" : ""}`}
-                            onClick={() => setAutoApprove(v => !v)}
-                        >
-                            <div className="big-toggle-ball" />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Danger zone */}
-                <div className="settings-card danger-card">
-                    <h3>⚠️ Vùng nguy hiểm</h3>
-                    <div className="danger-actions">
-                        <div className="danger-item">
-                            <div>
-                                <p className="danger-title">Xóa cache hệ thống</p>
-                                <p className="danger-sub">Làm sạch toàn bộ cache Redis</p>
-                            </div>
-                            <button className="danger-btn secondary">🗑️ Xóa cache</button>
-                        </div>
-                        <div className="danger-item">
-                            <div>
-                                <p className="danger-title">Xuất dữ liệu</p>
-                                <p className="danger-sub">Tải toàn bộ DB dạng CSV</p>
-                            </div>
-                            <button className="danger-btn secondary">📥 Xuất CSV</button>
-                        </div>
-                        <div className="danger-item">
-                            <div>
-                                <p className="danger-title">Reset hệ thống</p>
-                                <p className="danger-sub text-danger">Hành động này không thể hoàn tác!</p>
-                            </div>
-                            <button className="danger-btn primary">💣 Reset</button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* System info */}
-                <div className="settings-card">
-                    <h3>📋 Thông tin hệ thống</h3>
+                    <h3>📌 Gợi ý cấu hình VietQR</h3>
                     <div className="sysinfo-list">
-                        {[
-                            { label: "Phiên bản",    value: "v2.4.1" },
-                            { label: "Môi trường",   value: "Production" },
-                            { label: "Node.js",      value: "v20.11.0" },
-                            { label: "Database",     value: "PostgreSQL 15" },
-                            { label: "Redis",        value: "7.2.4" },
-                            { label: "Uptime",       value: "14 ngày 6 giờ" },
-                            { label: "RAM sử dụng",  value: "1.2 GB / 4 GB" },
-                            { label: "CPU",          value: "12%" },
-                        ].map((item, i) => (
-                            <div key={i} className="sysinfo-row">
-                                <span className="sysinfo-label">{item.label}</span>
-                                <span className="sysinfo-value">{item.value}</span>
-                            </div>
-                        ))}
+                        <div className="sysinfo-row"><span className="sysinfo-label">providerType</span><span className="sysinfo-value">BANK</span></div>
+                        <div className="sysinfo-row"><span className="sysinfo-label">bankCode</span><span className="sysinfo-value">VD: MB, VCB, ACB</span></div>
+                        <div className="sysinfo-row"><span className="sysinfo-label">qrImageUrl</span><span className="sysinfo-value">Base URL QR của ngân hàng/API</span></div>
+                        <div className="sysinfo-row"><span className="sysinfo-label">active</span><span className="sysinfo-value">Chỉ active mới cho user chọn</span></div>
                     </div>
                 </div>
             </div>
+
+            {showForm && (
+                <div className="modal-backdrop" onClick={() => setShowForm(false)}>
+                    <form className="user-modal admin-form-modal" onClick={e => e.stopPropagation()} onSubmit={submit}>
+                        <button type="button" className="modal-close" onClick={() => setShowForm(false)}>✕</button>
+                        <h3>{editing ? "Sửa phương thức thanh toán" : "Thêm phương thức thanh toán"}</h3>
+                        <div className="admin-form-grid one-col">
+                            <label>Provider type<input value={form.providerType} onChange={e => setForm({ ...form, providerType: e.target.value })} required /></label>
+                            <label>Bank code<input value={form.bankCode} onChange={e => setForm({ ...form, bankCode: e.target.value })} /></label>
+                            <label>Số tài khoản<input value={form.accountNumber} onChange={e => setForm({ ...form, accountNumber: e.target.value })} /></label>
+                            <label>Chủ tài khoản<input value={form.accountName} onChange={e => setForm({ ...form, accountName: e.target.value })} /></label>
+                            <label>QR template<input value={form.qrTemplate} onChange={e => setForm({ ...form, qrTemplate: e.target.value })} /></label>
+                            <label>QR image URL<input value={form.qrImageUrl} onChange={e => setForm({ ...form, qrImageUrl: e.target.value })} /></label>
+                            <label className="checkbox-label"><input type="checkbox" checked={form.active} onChange={e => setForm({ ...form, active: e.target.checked })} /> Active</label>
+                        </div>
+                        <div className="um-actions">
+                            <button className="act-btn unban lg" disabled={saving}>{saving ? "Đang lưu..." : "💾 Lưu"}</button>
+                            <button type="button" className="act-btn view lg" onClick={() => setShowForm(false)}>Hủy</button>
+                        </div>
+                    </form>
+                </div>
+            )}
         </div>
     );
 };

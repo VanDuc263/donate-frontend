@@ -1,19 +1,34 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { mdiAlphaTCircle, mdiAlphaZCircle, mdiFacebook, mdiInstagram, mdiYoutube } from "@mdi/js";
+import {
+    mdiAlphaTCircle,
+    mdiAlphaZCircle,
+    mdiFacebook,
+    mdiInstagram,
+    mdiYoutube,
+} from "@mdi/js";
 import Icon from "@mdi/react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { AppDispatch } from "../../../app/store";
 import QRWidget from "../../../components/QRWidget";
 import "../../../styles/streamer_detail.css";
-import { getLatestDonationsByStreamerId, getTopDonor } from "../../donate/donateApi";
+import {
+    getLatestDonationsByStreamerId,
+    getTopDonor,
+} from "../../donate/donateApi";
 import DonateForm from "../../donate/components/DonateForm";
-import { addDonateRealtime, setDonations } from "../../donate/donateSlice";
-import { connectSocket } from "../../../services/socket";
+import {
+    addDonateRealtime,
+    setDonations,
+} from "../../donate/donateSlice";
+import { subscribeDonate } from "../../../services/socket";
 import { followStreamer, unfollowStreamer } from "../streamerApi";
 import { fetchStreamer } from "../streamerSlice";
 
-const socialPlatformMeta: Record<string, { label: string; icon: string; className: string }> = {
+const socialPlatformMeta: Record<
+    string,
+    { label: string; icon: string; className: string }
+> = {
     FACEBOOK: { label: "Facebook", icon: mdiFacebook, className: "facebook" },
     YOUTUBE: { label: "YouTube", icon: mdiYoutube, className: "youtube" },
     TIKTOK: { label: "TikTok", icon: mdiAlphaTCircle, className: "tiktok" },
@@ -28,6 +43,7 @@ const StreamerDetail = () => {
     const { streamerDetail, loading } = useSelector(
         (state: any) => state.streamer
     );
+
     const donations = useSelector((state: any) => state.donate.donations);
 
     const [showDonate, setShowDonate] = useState(false);
@@ -37,16 +53,16 @@ const StreamerDetail = () => {
     const [followLoading, setFollowLoading] = useState(false);
 
     const activeStreamerIdRef = useRef<number | null>(null);
-    const socketRef = useRef<any>(null);
+    const unsubscribeDonateRef = useRef<null | (() => void)>(null);
 
     useEffect(() => {
         dispatch(setDonations([]));
         setTopDonors([]);
         activeStreamerIdRef.current = null;
 
-        if (socketRef.current) {
-            socketRef.current();
-            socketRef.current = null;
+        if (unsubscribeDonateRef.current) {
+            unsubscribeDonateRef.current();
+            unsubscribeDonateRef.current = null;
         }
     }, [token, dispatch]);
 
@@ -60,19 +76,25 @@ const StreamerDetail = () => {
 
         let ignore = false;
 
-        (async () => {
+        const fetchTopDonors = async () => {
             setLoadingDonors(true);
+
             try {
                 const res = await getTopDonor(token);
+
                 if (!ignore) {
                     setTopDonors(res.data);
                 }
+            } catch (error) {
+                console.log(error);
             } finally {
                 if (!ignore) {
                     setLoadingDonors(false);
                 }
             }
-        })();
+        };
+
+        fetchTopDonors();
 
         return () => {
             ignore = true;
@@ -86,11 +108,15 @@ const StreamerDetail = () => {
         activeStreamerIdRef.current = currentId;
 
         const fetchDonations = async () => {
-            const res = await getLatestDonationsByStreamerId(currentId);
+            try {
+                const res = await getLatestDonationsByStreamerId(currentId);
 
-            if (activeStreamerIdRef.current !== currentId) return;
+                if (activeStreamerIdRef.current !== currentId) return;
 
-            dispatch(setDonations(res.data));
+                dispatch(setDonations(res.data));
+            } catch (error) {
+                console.log(error);
+            }
         };
 
         fetchDonations();
@@ -102,17 +128,23 @@ const StreamerDetail = () => {
         const currentId = streamerDetail.streamerId;
         activeStreamerIdRef.current = currentId;
 
-        const disconnect = connectSocket(currentId, (data) => {
+        if (unsubscribeDonateRef.current) {
+            unsubscribeDonateRef.current();
+            unsubscribeDonateRef.current = null;
+        }
+
+        const unsubscribe = subscribeDonate(currentId, (data) => {
             if (activeStreamerIdRef.current !== currentId) return;
 
             dispatch(addDonateRealtime(data));
             setTopDonors(data.topDonors || []);
         });
 
-        socketRef.current = disconnect;
+        unsubscribeDonateRef.current = unsubscribe;
 
         return () => {
-            disconnect();
+            unsubscribe();
+            unsubscribeDonateRef.current = null;
         };
     }, [streamerDetail?.streamerId, dispatch]);
 
@@ -195,9 +227,11 @@ const StreamerDetail = () => {
                         <button onClick={openDonate} className="donate-btn">
                             Donate
                         </button>
+
                         <button onClick={handleFollowToggle} disabled={followLoading}>
                             {isFollowing ? "Đang theo dõi" : "Theo dõi"}
                         </button>
+
                         <button onClick={handleShare}>Chia sẻ</button>
                     </div>
 
@@ -209,12 +243,21 @@ const StreamerDetail = () => {
                                     href={item.url}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className={`streamer-social-link ${socialPlatformMeta[item.platform]?.className || ""}`}
-                                    aria-label={socialPlatformMeta[item.platform]?.label || item.platform}
-                                    title={socialPlatformMeta[item.platform]?.label || item.platform}
+                                    className={`streamer-social-link ${
+                                        socialPlatformMeta[item.platform]?.className || ""
+                                    }`}
+                                    aria-label={
+                                        socialPlatformMeta[item.platform]?.label || item.platform
+                                    }
+                                    title={
+                                        socialPlatformMeta[item.platform]?.label || item.platform
+                                    }
                                 >
                                     <Icon
-                                        path={socialPlatformMeta[item.platform]?.icon || mdiAlphaZCircle}
+                                        path={
+                                            socialPlatformMeta[item.platform]?.icon ||
+                                            mdiAlphaZCircle
+                                        }
                                         size={0.82}
                                     />
                                 </a>
@@ -235,6 +278,7 @@ const StreamerDetail = () => {
                             {streamerDetail?.qrUrl && token && (
                                 <QRWidget qrUrl={streamerDetail.qrUrl} token={token} />
                             )}
+
                             {!streamerDetail?.qrUrl && (
                                 <p>
                                     Streamer chưa cấu hình tài khoản ngân hàng để tạo QR code.
@@ -262,9 +306,7 @@ const StreamerDetail = () => {
                     <div className="right">
                         <div className="donate-banner">
                             <span>Bạn yêu thích streamer này?</span>
-                            <button onClick={openDonate}>
-                                DONATE NGAY
-                            </button>
+                            <button onClick={openDonate}>DONATE NGAY</button>
                         </div>
 
                         {showDonate && <DonateForm onClose={closeDonate} />}

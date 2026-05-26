@@ -5,7 +5,7 @@ import { RootState, AppDispatch } from "../app/store";
 import { Link, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import "../styles/login.css";
-import {getMyWalletThunk} from "../features/wallet/walletSlice";
+import { getMyWalletThunk } from "../features/wallet/walletSlice";
 
 const Login = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -15,13 +15,29 @@ const Login = () => {
     const [username, setUsername] = useState<string>("");
     const [password, setPassword] = useState<string>("");
 
+    const redirectByRole = async (payload: any) => {
+        const role = String(payload?.user?.role || "")
+            .replace("ROLE_", "")
+            .toUpperCase();
+
+        console.log("LOGIN ROLE =", role);
+
+        if (role === "ADMIN") {
+            navigate("/admin", { replace: true });
+            return;
+        }
+
+        await dispatch(getMyWalletThunk());
+        navigate("/", { replace: true });
+    };
+
     const handleLogin = async () => {
         if (!username || !password) return;
 
         const result = await dispatch(loginThunk({ username, password }));
-        if (loginThunk.fulfilled.match(result)){
-            await dispatch(getMyWalletThunk());
-            navigate("/");
+
+        if (loginThunk.fulfilled.match(result)) {
+            await redirectByRole(result.payload);
         }
     };
 
@@ -29,9 +45,9 @@ const Login = () => {
         if (!credential) return;
 
         const result = await dispatch(loginGoogleThunk(credential));
-        if (loginGoogleThunk.fulfilled.match(result)){
-            await dispatch(getMyWalletThunk());
-            navigate("/");
+
+        if (loginGoogleThunk.fulfilled.match(result)) {
+            await redirectByRole(result.payload);
         }
     };
 
@@ -68,10 +84,11 @@ const Login = () => {
 
                             if (credentialResponse.credential) {
                                 handleGoogleLogin(credentialResponse.credential);
-                               }
+                            }
                         }}
                         onError={() => console.log("Google login failed")}
                     />
+
                     <button className="facebook">
                         <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" />
                         Đăng nhập Facebook
@@ -79,8 +96,10 @@ const Login = () => {
                 </div>
 
                 <div className="divider">Chưa có tài khoản?</div>
-                <Link to="/register" className="register-link">Đăng ký ngay</Link>
-  
+                <Link to="/register" className="register-link">
+                    Đăng ký ngay
+                </Link>
+
                 <button className="back-btn" onClick={() => navigate(-1)}>
                     ← Quay lại
                 </button>

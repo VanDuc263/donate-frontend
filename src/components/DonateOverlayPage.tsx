@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { connectSocket } from "../services/socket";
+import { subscribeDonate } from "../services/socket";
 import "../styles/donate_overlay.css";
 
 export type OverlayDonationData = {
@@ -42,46 +42,96 @@ const defaultPreviewDonation: OverlayDonationData = {
     message: "Hello streamer"
 };
 
-const defaultContentTemplate = "{name}\nđã donate {amount} đồng cho bạn.\n{message}";
-
 const DonateOverlayPage = ({
-    previewMode = false,
-    previewVisible = true,
-    previewDonation = defaultPreviewDonation,
-    previewConfig,
-    previewImage
-}: DonateOverlayPageProps) => {
-    const { streamerId } = useParams();
+                               previewMode = false,
+                               previewVisible = true,
+                               previewDonation = defaultPreviewDonation,
+                               previewConfig,
+                               previewImage
+                           }: DonateOverlayPageProps) => {
+    const { streamerId } = useParams<{ streamerId: string }>();
 
     const [queue, setQueue] = useState<OverlayDonationData[]>([]);
     const [current, setCurrent] = useState<OverlayDonationData | null>(null);
     const [visible, setVisible] = useState(false);
 
-    useEffect(() => {
-        if (previewMode || !streamerId) return;
+    const hideTimerRef = useRef<number | null>(null);
+    const clearTimerRef = useRef<number | null>(null);
 
-        const disconnect = connectSocket(Number(streamerId), (data) => {
-            setQueue((prev) => [...prev, data]);
+    useEffect(() => {
+        if (previewMode) return;
+
+        console.log("[Overlay] route streamerId =", streamerId);
+
+        if (!streamerId) {
+            console.warn("[Overlay] Missing streamerId in URL");
+            return;
+        }
+
+        const id = Number(streamerId);
+
+        if (Number.isNaN(id)) {
+            console.warn("[Overlay] Invalid streamerId:", streamerId);
+            return;
+        }
+
+        const unsubscribe = subscribeDonate(id, (data: any) => {
+            console.log("[Overlay] Donate received:", data);
+
+            setQueue((prev) => [
+                ...prev,
+                {
+                    donorName: data.donorName || data.name || "Ẩn danh",
+                    amount: data.amount || 0,
+                    message: data.message || ""
+                }
+            ]);
         });
 
-        return () => disconnect();
+        return () => {
+            console.log("[Overlay] Unsubscribe donate:", id);
+            unsubscribe?.();
+        };
     }, [previewMode, streamerId]);
 
     useEffect(() => {
         if (previewMode) return;
-        if (!current && queue.length > 0) {
-            const next = queue[0];
-            setQueue((prev) => prev.slice(1));
-            setCurrent(next);
-            setVisible(true);
+        if (current) return;
+        if (queue.length === 0) return;
 
-            setTimeout(() => {
-                setVisible(false);
-                setTimeout(() => {
-                    setCurrent(null);
-                }, 500);
-            }, 4000);
+        const next = queue[0];
+
+        setQueue((prev) => prev.slice(1));
+        setCurrent(next);
+        setVisible(true);
+
+        if (hideTimerRef.current) {
+            window.clearTimeout(hideTimerRef.current);
         }
+
+        if (clearTimerRef.current) {
+            window.clearTimeout(clearTimerRef.current);
+        }
+
+        hideTimerRef.current = window.setTimeout(() => {
+            setVisible(false);
+
+            clearTimerRef.current = window.setTimeout(() => {
+                setCurrent(null);
+            }, 500);
+        }, 4000);
+
+        return () => {
+            if (hideTimerRef.current) {
+                window.clearTimeout(hideTimerRef.current);
+                hideTimerRef.current = null;
+            }
+
+            if (clearTimerRef.current) {
+                window.clearTimeout(clearTimerRef.current);
+                clearTimerRef.current = null;
+            }
+        };
     }, [previewMode, queue, current]);
 
     const overlayItem = previewMode ? previewDonation : current;
@@ -91,6 +141,20 @@ const DonateOverlayPage = ({
         const position = previewConfig?.alert?.position ?? "center";
         return `donate-overlay--${position}`;
     }, [previewConfig?.alert?.position]);
+
+    const contentTemplate =
+        previewConfig?.alert?.content ||
+        "{name}\nđã donate {amount} đồng cho bạn.\n{message}";
+
+    const overlayBackground = previewConfig?.style?.colors?.background;
+
+    const formatAmount = (amount: number | string) => {
+        const numberAmount = Number(amount);
+
+        if (Number.isNaN(numberAmount)) return amount;
+
+        return numberAmount.toLocaleString("vi-VN");
+    };
 
     const renderTemplate = (template: string, item: OverlayDonationData) => {
         const tokenRegex = /(\{name\}|\{amount\}|\{message\})/g;
@@ -103,7 +167,13 @@ const DonateOverlayPage = ({
                     {parts.map((part, partIndex) => {
                         if (part === "{name}") {
                             return (
-                                <span key={`${lineIndex}-${partIndex}`} style={{ color: previewConfig?.style?.colors?.text }}>
+                                <span
+                                    key={`${lineIndex}-${partIndex}`}
+                                    style={{
+                                        color: previewConfig?.style?.colors?.text,
+                                        fontSize: previewConfig?.style?.font?.name_size
+                                    }}
+                                >
                                     {item.donorName}
                                 </span>
                             );
@@ -111,8 +181,13 @@ const DonateOverlayPage = ({
 
                         if (part === "{amount}") {
                             return (
-                                <span key={`${lineIndex}-${partIndex}`} style={{ color: previewConfig?.style?.colors?.amount }}>
-                                    {item.amount}
+                                <span
+                                    key={`${lineIndex}-${partIndex}`}
+                                    style={{
+                                        color: previewConfig?.style?.colors?.amount
+                                    }}
+                                >
+                                    {formatAmount(item.amount)}
                                 </span>
                             );
                         }
@@ -138,29 +213,34 @@ const DonateOverlayPage = ({
         });
     };
 
-    const contentTemplate = previewConfig?.alert?.content || "{name}\n\u0111\u00e3 donate {amount} \u0111\u1ed3ng cho b\u1ea1n.\n{message}";
-    const overlayBackground = previewConfig?.style?.colors?.background;
-
     if (!overlayItem || !shouldRender) return null;
 
     return (
-        <div className={`donate-overlay ${previewMode ? "donate-overlay--preview" : ""} ${positionClass}`}>
+        <div
+            className={`donate-overlay ${
+                previewMode ? "donate-overlay--preview" : ""
+            } ${positionClass}`}
+        >
             <div
                 className="overlay-content"
                 style={{
-                    background: overlayBackground && overlayBackground !== "transparent"
-                        ? `${overlayBackground}E6`
-                        : "transparent",
-                    borderColor: overlayBackground === "transparent"
-                        ? "rgba(255, 255, 255, 0.08)"
-                        : undefined,
-                    boxShadow: overlayBackground === "transparent"
-                        ? "none"
-                        : undefined
+                    background:
+                        overlayBackground && overlayBackground !== "transparent"
+                            ? `${overlayBackground}E6`
+                            : "transparent",
+                    borderColor:
+                        overlayBackground === "transparent"
+                            ? "rgba(255, 255, 255, 0.08)"
+                            : undefined,
+                    boxShadow:
+                        overlayBackground === "transparent" ? "none" : undefined
                 }}
             >
                 <div className="overlay-image">
-                    <img src={previewImage || "/images/animations/anhdong.gif"} alt="donate" />
+                    <img
+                        src={previewImage || "/images/animations/anhdong.gif"}
+                        alt="donate"
+                    />
                 </div>
 
                 <div className="overlay-text">

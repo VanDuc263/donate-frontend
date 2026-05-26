@@ -1,225 +1,378 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { adminApi } from "./adminApi";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+export type AdminRole = "USER" | "STREAMER" | "ADMIN";
+export type TxStatus = "SUCCESS" | "PENDING" | "FAILED" | "CANCELLED" | string;
 
 export interface AdminUser {
-    id: string;
+    id: number;
     username: string;
     email: string;
-    role: "admin" | "streamer" | "viewer";
-    status: "active" | "banned" | "pending";
-    avatar: string;
-    joinedDate: string;
-    totalDonated: number;
-    totalReceived: number;
-    lastActive: string;
-}
-
-export interface AdminTransaction {
-    id: string;
-    from: string;
-    to: string;
-    amount: number;
-    message: string;
-    timestamp: string;
-    status: "completed" | "pending" | "failed" | "refunded";
-    method: "wallet" | "qr" | "bank";
+    fullName?: string | null;
+    avatar?: string | null;
+    role: AdminRole;
+    createdAt?: string | null;
+    streamerId?: number | null;
+    streamerDisplayName?: string | null;
+    walletBalance?: number | null;
 }
 
 export interface AdminStreamer {
-    id: string;
-    username: string;
-    avatar: string;
-    game: string;
-    totalEarned: number;
-    donorCount: number;
-    status: "active" | "suspended" | "pending";
-    verified: boolean;
-    joinedDate: string;
+    id: number;
+    userId: number;
+    username?: string | null;
+    email?: string | null;
+    displayName: string;
+    token: string;
+    avatar?: string | null;
+    thumb?: string | null;
+    bio?: string | null;
+    followers: number;
+    createdAt?: string | null;
+    totalReceived?: number | null;
+    donationCount?: number | null;
+}
+
+export interface AdminDonation {
+    id: number;
+    streamerId?: number | null;
+    streamerName?: string | null;
+    streamerToken?: string | null;
+    donorId?: number | null;
+    donorName?: string | null;
+    amount: number;
+    message?: string | null;
+    content?: string | null;
+    referenceCode?: string | null;
+    status: TxStatus;
+    createdAt?: string | null;
+}
+
+export interface AdminWalletTransaction {
+    id: number;
+    walletId?: number | null;
+    userId?: number | null;
+    username?: string | null;
+    type: string;
+    amount: number;
+    fee?: number | null;
+    netAmount?: number | null;
+    balanceBefore?: number | null;
+    balanceAfter?: number | null;
+    referenceType?: string | null;
+    referenceId?: number | null;
+    status: TxStatus;
+    transactionCode?: string | null;
+    referenceCode?: string | null;
+    createdAt?: string | null;
+}
+
+export interface AdminPayment {
+    id: number;
+    donationId?: number | null;
+    provider?: string | null;
+    transactionCode?: string | null;
+    status: TxStatus;
+    createdAt?: string | null;
+    streamerId?: number | null;
+    donorId?: number | null;
+    donorName?: string | null;
+    amount?: number | null;
+    message?: string | null;
+    bankCode?: string | null;
+    bankAccountNo?: string | null;
+    bankAccountName?: string | null;
+    addInfo?: string | null;
+    qrUrl?: string | null;
+    paidAt?: string | null;
+    donationCreated?: boolean | null;
+}
+
+export interface AdminPaymentMethod {
+    id: number;
+    providerType: string;
+    bankCode?: string | null;
+    accountNumber?: string | null;
+    accountName?: string | null;
+    qrTemplate?: string | null;
+    qrImageUrl?: string | null;
+    active: boolean;
+    createdAt?: string | null;
 }
 
 export interface AdminStats {
     totalUsers: number;
     totalStreamers: number;
     totalDonations: number;
+    successDonations: number;
+    pendingDonations: number;
     totalRevenue: number;
-    activeToday: number;
-    newThisMonth: number;
-    pendingReports: number;
+    totalWalletBalance?: number | null;
+    totalSystemFee?: number | null;
+    pendingWalletTransactions: number;
+    activePaymentMethods: number;
     successRate: number;
-    revenueChart: { month: string; amount: number }[];
-    userGrowth: { month: string; count: number }[];
-    topCategories: { name: string; percent: number }[];
+    revenueChart: { month: string; amount: number; count?: number }[];
+    userGrowth: { month: string; amount?: number; count: number }[];
+    latestDonations: AdminDonation[];
 }
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
+interface AdminState {
+    stats: AdminStats | null;
+    users: AdminUser[];
+    streamers: AdminStreamer[];
+    donations: AdminDonation[];
+    walletTransactions: AdminWalletTransaction[];
+    payments: AdminPayment[];
+    paymentMethods: AdminPaymentMethod[];
+    loading: boolean;
+    saving: boolean;
+    error: string | null;
+    userSearch: string;
+    txSearch: string;
+    userFilter: "all" | AdminRole;
+    txFilter: "all" | string;
+}
 
-const mockStats: AdminStats = {
-    totalUsers: 12847,
-    totalStreamers: 438,
-    totalDonations: 94201,
-    totalRevenue: 1_890_500_000,
-    activeToday: 2341,
-    newThisMonth: 892,
-    pendingReports: 14,
-    successRate: 97.4,
-    revenueChart: [
-        { month: "T10", amount: 120_000_000 },
-        { month: "T11", amount: 185_000_000 },
-        { month: "T12", amount: 240_000_000 },
-        { month: "T1", amount: 195_000_000 },
-        { month: "T2", amount: 320_000_000 },
-        { month: "T3", amount: 410_000_000 },
-        { month: "T4", amount: 420_500_000 },
-    ],
-    userGrowth: [
-        { month: "T10", count: 820 },
-        { month: "T11", count: 1040 },
-        { month: "T12", count: 1580 },
-        { month: "T1", count: 1120 },
-        { month: "T2", count: 1650 },
-        { month: "T3", count: 2100 },
-        { month: "T4", count: 892 },
-    ],
-    topCategories: [
-        { name: "Free Fire", percent: 34 },
-        { name: "PUBG Mobile", percent: 22 },
-        { name: "Liên Quân", percent: 18 },
-        { name: "Minecraft", percent: 12 },
-        { name: "Khác", percent: 14 },
-    ],
-};
-
-const mockUsers: AdminUser[] = Array.from({ length: 20 }, (_, i) => ({
-    id: `u${i + 1}`,
-    username: ["MixiGaming","Tabi","HuongMeu","ProGamer","StreamQueen","NightOwl","GGBoy","Lily","Merlin","Zeno","Alice","Bob","Carol","Dave","Eve","Frank","Grace","Hank","Ivy","Jack"][i],
-    email: `user${i + 1}@example.com`,
-    role: i === 0 ? "admin" : i < 5 ? "streamer" : "viewer",
-    status: i === 7 ? "banned" : i === 12 ? "pending" : "active",
-    avatar: `https://i.pravatar.cc/150?img=${i + 1}`,
-    joinedDate: `2024-0${(i % 9) + 1}-${String((i * 3 + 1) % 28 + 1).padStart(2, "0")}`,
-    totalDonated: Math.floor(Math.random() * 5_000_000),
-    totalReceived: i < 5 ? Math.floor(Math.random() * 50_000_000) : 0,
-    lastActive: `${Math.floor(Math.random() * 30) + 1} ngày trước`,
-}));
-
-const mockTransactions: AdminTransaction[] = Array.from({ length: 25 }, (_, i) => ({
-    id: `tx${String(i + 1).padStart(4, "0")}`,
-    from: mockUsers[Math.floor(Math.random() * 10) + 5].username,
-    to: mockUsers[Math.floor(Math.random() * 5)].username,
-    amount: [10000, 20000, 50000, 100000, 200000, 500000][Math.floor(Math.random() * 6)],
-    message: i % 3 === 0 ? "Ủng hộ streamer!" : i % 4 === 0 ? "GG ez 😎" : "",
-    timestamp: `2025-04-${String(Math.floor(Math.random() * 10) + 1).padStart(2, "0")} ${String(Math.floor(Math.random() * 23)).padStart(2, "0")}:${String(Math.floor(Math.random() * 59)).padStart(2, "0")}`,
-    status: i === 3 ? "failed" : i === 8 ? "refunded" : i % 7 === 0 ? "pending" : "completed",
-    method: ["wallet", "qr", "bank"][i % 3] as any,
-}));
-
-const mockStreamers: AdminStreamer[] = mockUsers.filter(u => u.role === "streamer").map((u, i) => ({
-    id: u.id,
-    username: u.username,
-    avatar: u.avatar,
-    game: ["Free Fire", "PUBG Mobile", "Liên Quân", "Minecraft", "Valorant"][i % 5],
-    totalEarned: u.totalReceived,
-    donorCount: Math.floor(Math.random() * 2000) + 100,
-    status: u.status === "banned" ? "suspended" : "active",
-    verified: i < 3,
-    joinedDate: u.joinedDate,
-}));
-
-// ─── Thunks ───────────────────────────────────────────────────────────────────
+const errMsg = (err: any, fallback: string) =>
+    err?.response?.data?.message || err?.response?.data?.error || fallback;
 
 export const fetchAdminStats = createAsyncThunk("admin/fetchStats", async (_, thunkAPI) => {
     try {
-        await new Promise(r => setTimeout(r, 600));
-        return mockStats;
-    } catch { return thunkAPI.rejectWithValue("Lỗi tải stats"); }
+        const res = await adminApi.getStats();
+        return res.data as AdminStats;
+    } catch (err: any) {
+        return thunkAPI.rejectWithValue(errMsg(err, "Lỗi tải tổng quan admin"));
+    }
 });
 
 export const fetchAdminUsers = createAsyncThunk("admin/fetchUsers", async (_, thunkAPI) => {
     try {
-        await new Promise(r => setTimeout(r, 400));
-        return mockUsers;
-    } catch { return thunkAPI.rejectWithValue("Lỗi tải users"); }
+        const res = await adminApi.getUsers();
+        return res.data as AdminUser[];
+    } catch (err: any) {
+        return thunkAPI.rejectWithValue(errMsg(err, "Lỗi tải danh sách user"));
+    }
 });
 
-export const fetchAdminTransactions = createAsyncThunk("admin/fetchTransactions", async (_, thunkAPI) => {
+export const createAdminUser = createAsyncThunk("admin/createUser", async (data: Partial<AdminUser> & { password: string }, thunkAPI) => {
     try {
-        await new Promise(r => setTimeout(r, 400));
-        return mockTransactions;
-    } catch { return thunkAPI.rejectWithValue("Lỗi tải transactions"); }
+        const res = await adminApi.createUser(data);
+        return res.data as AdminUser;
+    } catch (err: any) {
+        return thunkAPI.rejectWithValue(errMsg(err, "Lỗi tạo user"));
+    }
+});
+
+export const updateAdminUser = createAsyncThunk("admin/updateUser", async ({ id, data }: { id: number; data: any }, thunkAPI) => {
+    try {
+        const res = await adminApi.updateUser(id, data);
+        return res.data as AdminUser;
+    } catch (err: any) {
+        return thunkAPI.rejectWithValue(errMsg(err, "Lỗi cập nhật user"));
+    }
+});
+
+export const deleteAdminUser = createAsyncThunk("admin/deleteUser", async (id: number, thunkAPI) => {
+    try {
+        await adminApi.deleteUser(id);
+        return id;
+    } catch (err: any) {
+        return thunkAPI.rejectWithValue(errMsg(err, "Lỗi xóa user"));
+    }
 });
 
 export const fetchAdminStreamers = createAsyncThunk("admin/fetchStreamers", async (_, thunkAPI) => {
     try {
-        await new Promise(r => setTimeout(r, 400));
-        return mockStreamers;
-    } catch { return thunkAPI.rejectWithValue("Lỗi tải streamers"); }
+        const res = await adminApi.getStreamers();
+        return res.data as AdminStreamer[];
+    } catch (err: any) {
+        return thunkAPI.rejectWithValue(errMsg(err, "Lỗi tải streamer"));
+    }
 });
 
-export const banUser = createAsyncThunk("admin/banUser", async (userId: string, thunkAPI) => {
-    await new Promise(r => setTimeout(r, 500));
-    return userId;
+export const updateAdminStreamer = createAsyncThunk("admin/updateStreamer", async ({ id, data }: { id: number; data: any }, thunkAPI) => {
+    try {
+        const res = await adminApi.updateStreamer(id, data);
+        return res.data as AdminStreamer;
+    } catch (err: any) {
+        return thunkAPI.rejectWithValue(errMsg(err, "Lỗi cập nhật streamer"));
+    }
 });
 
-export const unbanUser = createAsyncThunk("admin/unbanUser", async (userId: string, thunkAPI) => {
-    await new Promise(r => setTimeout(r, 500));
-    return userId;
+export const deleteAdminStreamer = createAsyncThunk("admin/deleteStreamer", async (id: number, thunkAPI) => {
+    try {
+        await adminApi.deleteStreamer(id);
+        return id;
+    } catch (err: any) {
+        return thunkAPI.rejectWithValue(errMsg(err, "Lỗi xóa streamer"));
+    }
 });
 
-// ─── Slice ────────────────────────────────────────────────────────────────────
+export const fetchAdminTransactions = createAsyncThunk("admin/fetchTransactions", async (_, thunkAPI) => {
+    try {
+        const [donations, wallets, payments] = await Promise.all([
+            adminApi.getDonations(150),
+            adminApi.getWalletTransactions(150),
+            adminApi.getPayments(150),
+        ]);
+        return {
+            donations: donations.data as AdminDonation[],
+            walletTransactions: wallets.data as AdminWalletTransaction[],
+            payments: payments.data as AdminPayment[],
+        };
+    } catch (err: any) {
+        return thunkAPI.rejectWithValue(errMsg(err, "Lỗi tải giao dịch"));
+    }
+});
+
+export const fetchAdminPaymentMethods = createAsyncThunk("admin/fetchPaymentMethods", async (_, thunkAPI) => {
+    try {
+        const res = await adminApi.getPaymentMethods();
+        return res.data as AdminPaymentMethod[];
+    } catch (err: any) {
+        return thunkAPI.rejectWithValue(errMsg(err, "Lỗi tải phương thức thanh toán"));
+    }
+});
+
+export const createAdminPaymentMethod = createAsyncThunk("admin/createPaymentMethod", async (data: any, thunkAPI) => {
+    try {
+        const res = await adminApi.createPaymentMethod(data);
+        return res.data as AdminPaymentMethod;
+    } catch (err: any) {
+        return thunkAPI.rejectWithValue(errMsg(err, "Lỗi tạo phương thức thanh toán"));
+    }
+});
+
+export const updateAdminPaymentMethod = createAsyncThunk("admin/updatePaymentMethod", async ({ id, data }: { id: number; data: any }, thunkAPI) => {
+    try {
+        const res = await adminApi.updatePaymentMethod(id, data);
+        return res.data as AdminPaymentMethod;
+    } catch (err: any) {
+        return thunkAPI.rejectWithValue(errMsg(err, "Lỗi cập nhật phương thức thanh toán"));
+    }
+});
+
+export const deleteAdminPaymentMethod = createAsyncThunk("admin/deletePaymentMethod", async (id: number, thunkAPI) => {
+    try {
+        await adminApi.deletePaymentMethod(id);
+        return id;
+    } catch (err: any) {
+        return thunkAPI.rejectWithValue(errMsg(err, "Lỗi xóa phương thức thanh toán"));
+    }
+});
+
+const initialState: AdminState = {
+    stats: null,
+    users: [],
+    streamers: [],
+    donations: [],
+    walletTransactions: [],
+    payments: [],
+    paymentMethods: [],
+    loading: false,
+    saving: false,
+    error: null,
+    userSearch: "",
+    txSearch: "",
+    userFilter: "all",
+    txFilter: "all",
+};
 
 const adminSlice = createSlice({
     name: "admin",
-    initialState: {
-        stats: null as AdminStats | null,
-        users: [] as AdminUser[],
-        transactions: [] as AdminTransaction[],
-        streamers: [] as AdminStreamer[],
-        loading: false,
-        error: null as string | null,
-        userSearch: "",
-        txSearch: "",
-        userFilter: "all" as "all" | "active" | "banned" | "pending",
-        txFilter: "all" as "all" | "completed" | "pending" | "failed" | "refunded",
-    },
+    initialState,
     reducers: {
-        setUserSearch: (state, action) => { state.userSearch = action.payload; },
-        setTxSearch: (state, action) => { state.txSearch = action.payload; },
-        setUserFilter: (state, action) => { state.userFilter = action.payload; },
-        setTxFilter: (state, action) => { state.txFilter = action.payload; },
+        setUserSearch: (state, action: PayloadAction<string>) => { state.userSearch = action.payload; },
+        setTxSearch: (state, action: PayloadAction<string>) => { state.txSearch = action.payload; },
+        setUserFilter: (state, action: PayloadAction<AdminState["userFilter"]>) => { state.userFilter = action.payload; },
+        setTxFilter: (state, action: PayloadAction<string>) => { state.txFilter = action.payload; },
+        clearAdminError: (state) => { state.error = null; },
     },
-    extraReducers: builder => {
-        // Stats
-        builder.addCase(fetchAdminStats.pending, state => { state.loading = true; });
-        builder.addCase(fetchAdminStats.fulfilled, (state, action) => {
-            state.loading = false; state.stats = action.payload;
+    extraReducers: (builder) => {
+        const pending = (state: any) => { state.loading = true; state.error = null; };
+        const rejected = (state: any, action: any) => { state.loading = false; state.saving = false; state.error = action.payload || "Có lỗi xảy ra"; };
+        const savePending = (state: any) => { state.saving = true; state.error = null; };
+
+        builder.addCase(fetchAdminStats.pending, pending);
+        builder.addCase(fetchAdminStats.fulfilled, (state, action) => { state.loading = false; state.stats = action.payload; });
+        builder.addCase(fetchAdminStats.rejected, rejected);
+
+        builder.addCase(fetchAdminUsers.pending, pending);
+        builder.addCase(fetchAdminUsers.fulfilled, (state, action) => { state.loading = false; state.users = action.payload; });
+        builder.addCase(fetchAdminUsers.rejected, rejected);
+
+        builder.addCase(createAdminUser.pending, savePending);
+        builder.addCase(createAdminUser.fulfilled, (state, action) => { state.saving = false; state.users.unshift(action.payload); });
+        builder.addCase(createAdminUser.rejected, rejected);
+
+        builder.addCase(updateAdminUser.pending, savePending);
+        builder.addCase(updateAdminUser.fulfilled, (state, action) => {
+            state.saving = false;
+            const idx = state.users.findIndex(u => u.id === action.payload.id);
+            if (idx >= 0) state.users[idx] = action.payload;
         });
-        builder.addCase(fetchAdminStats.rejected, (state, action: any) => {
-            state.loading = false; state.error = action.payload;
+        builder.addCase(updateAdminUser.rejected, rejected);
+
+        builder.addCase(deleteAdminUser.pending, savePending);
+        builder.addCase(deleteAdminUser.fulfilled, (state, action) => {
+            state.saving = false;
+            state.users = state.users.filter(u => u.id !== action.payload);
         });
-        // Users
-        builder.addCase(fetchAdminUsers.fulfilled, (state, action) => {
-            state.users = action.payload;
+        builder.addCase(deleteAdminUser.rejected, rejected);
+
+        builder.addCase(fetchAdminStreamers.pending, pending);
+        builder.addCase(fetchAdminStreamers.fulfilled, (state, action) => { state.loading = false; state.streamers = action.payload; });
+        builder.addCase(fetchAdminStreamers.rejected, rejected);
+
+        builder.addCase(updateAdminStreamer.pending, savePending);
+        builder.addCase(updateAdminStreamer.fulfilled, (state, action) => {
+            state.saving = false;
+            const idx = state.streamers.findIndex(s => s.id === action.payload.id);
+            if (idx >= 0) state.streamers[idx] = action.payload;
         });
-        // Transactions
+        builder.addCase(updateAdminStreamer.rejected, rejected);
+
+        builder.addCase(deleteAdminStreamer.pending, savePending);
+        builder.addCase(deleteAdminStreamer.fulfilled, (state, action) => {
+            state.saving = false;
+            state.streamers = state.streamers.filter(s => s.id !== action.payload);
+        });
+        builder.addCase(deleteAdminStreamer.rejected, rejected);
+
+        builder.addCase(fetchAdminTransactions.pending, pending);
         builder.addCase(fetchAdminTransactions.fulfilled, (state, action) => {
-            state.transactions = action.payload;
+            state.loading = false;
+            state.donations = action.payload.donations;
+            state.walletTransactions = action.payload.walletTransactions;
+            state.payments = action.payload.payments;
         });
-        // Streamers
-        builder.addCase(fetchAdminStreamers.fulfilled, (state, action) => {
-            state.streamers = action.payload;
+        builder.addCase(fetchAdminTransactions.rejected, rejected);
+
+        builder.addCase(fetchAdminPaymentMethods.pending, pending);
+        builder.addCase(fetchAdminPaymentMethods.fulfilled, (state, action) => { state.loading = false; state.paymentMethods = action.payload; });
+        builder.addCase(fetchAdminPaymentMethods.rejected, rejected);
+
+        builder.addCase(createAdminPaymentMethod.pending, savePending);
+        builder.addCase(createAdminPaymentMethod.fulfilled, (state, action) => { state.saving = false; state.paymentMethods.unshift(action.payload); });
+        builder.addCase(createAdminPaymentMethod.rejected, rejected);
+
+        builder.addCase(updateAdminPaymentMethod.pending, savePending);
+        builder.addCase(updateAdminPaymentMethod.fulfilled, (state, action) => {
+            state.saving = false;
+            const idx = state.paymentMethods.findIndex(m => m.id === action.payload.id);
+            if (idx >= 0) state.paymentMethods[idx] = action.payload;
         });
-        // Ban / Unban
-        builder.addCase(banUser.fulfilled, (state, action) => {
-            const u = state.users.find(u => u.id === action.payload);
-            if (u) u.status = "banned";
+        builder.addCase(updateAdminPaymentMethod.rejected, rejected);
+
+        builder.addCase(deleteAdminPaymentMethod.pending, savePending);
+        builder.addCase(deleteAdminPaymentMethod.fulfilled, (state, action) => {
+            state.saving = false;
+            state.paymentMethods = state.paymentMethods.filter(m => m.id !== action.payload);
         });
-        builder.addCase(unbanUser.fulfilled, (state, action) => {
-            const u = state.users.find(u => u.id === action.payload);
-            if (u) u.status = "active";
-        });
+        builder.addCase(deleteAdminPaymentMethod.rejected, rejected);
     },
 });
 
-export const { setUserSearch, setTxSearch, setUserFilter, setTxFilter } = adminSlice.actions;
+export const { setUserSearch, setTxSearch, setUserFilter, setTxFilter, clearAdminError } = adminSlice.actions;
 export default adminSlice.reducer;

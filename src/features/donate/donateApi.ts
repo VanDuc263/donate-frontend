@@ -21,6 +21,7 @@ export interface donationPayload {
     donorName?: string;
     amount: number;
     message?: string;
+    methodId? : number;
 }
 
 

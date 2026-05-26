@@ -5,8 +5,9 @@ import { AppDispatch, RootState } from "../../../app/store";
 import { getPaymentStatus, transactionSyncTest } from "../../../services/paymentApi";
 import QRWidget from "../../../components/QRWidget";
 import WalletModal from "../../../components/WalletModal";
-import { createPaymentQr, donateByWallet } from "../donateApi";
+import {createPaymentBankQr, createPaymentQr, donateByWallet} from "../donateApi";
 import { setWallet } from "../../wallet/walletSlice";
+import {subscribePayment} from "../../../services/socket";
 
 type DonateModalProps = {
     onClose: () => void;
@@ -15,6 +16,7 @@ type DonateModalProps = {
 type TabType = "wallet" | "bank" | "qr";
 
 type PaymentInfo = {
+    donationId: number;
     orderCode: string;
     bankCode: string;
     accountNo: string;
@@ -155,29 +157,19 @@ function BankTab({ onClose }: { onClose: () => void }) {
     const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
     const [paymentStatus, setPaymentStatus] = useState<string>("");
     const [error, setError] = useState("");
-
     useEffect(() => {
-        if (!paymentInfo?.orderCode) return;
+        if (!paymentInfo?.donationId) return;
 
-        const interval = setInterval(async () => {
-            try {
-                const res = await getPaymentStatus(paymentInfo.orderCode);
-                const data = res.data;
+        const unsubscribe = subscribePayment(paymentInfo.donationId, (data) => {
+            setPaymentStatus(data.status || "SUCCESS");
+            alert("Thanh toán thành công!");
+            onClose();
+        });
 
-                setPaymentStatus(data.status);
-
-                if (data.status === "PAID" && data.donationCreated) {
-                    clearInterval(interval);
-                    alert("Thanh toán thành công!");
-                    onClose();
-                }
-            } catch (err) {
-                console.error("Lỗi check payment status:", err);
-            }
-        }, 3000);
-
-        return () => clearInterval(interval);
-    }, [paymentInfo, onClose]);
+        return () => {
+            unsubscribe();
+        };
+    }, [paymentInfo?.donationId, onClose]);
 
     const handleCreatePayment = async () => {
         try {
@@ -195,7 +187,7 @@ function BankTab({ onClose }: { onClose: () => void }) {
 
             setLoading(true);
 
-            const res = await createPaymentQr({
+            const res = await createPaymentBankQr({
                 streamerId: streamer.streamerId,
                 donorId: user?.userId ?? null,
                 donorName: user?.fullName || user?.username || "Anonymous",
@@ -309,28 +301,21 @@ function QrDonateTab({ onClose }: { onClose: () => void }) {
     const [error, setError] = useState("");
     const [paymentStatus, setPaymentStatus] = useState("");
 
+        console.log(paymentInfo?.donationId)
     useEffect(() => {
-        if (!paymentInfo?.orderCode) return;
+        if (!paymentInfo?.donationId) return;
 
-        const interval = setInterval(async () => {
-            try {
-                const res = await getPaymentStatus(paymentInfo.orderCode);
-                const data = res.data;
 
-                setPaymentStatus(data.status);
+        const unsubscribe = subscribePayment(paymentInfo.donationId, (data) => {
+            setPaymentStatus(data.status || "SUCCESS");
+            alert("Thanh toán thành công!");
+            onClose();
+        });
 
-                if (data.status === "PAID" && data.donationCreated) {
-                    clearInterval(interval);
-                    alert("Thanh toán thành công!");
-                    onClose();
-                }
-            } catch (err) {
-                console.error("Lỗi check payment status:", err);
-            }
-        }, 3000);
-
-        return () => clearInterval(interval);
-    }, [paymentInfo, onClose]);
+        return () => {
+            unsubscribe();
+        };
+    }, [paymentInfo?.donationId, onClose]);
 
     const handleCreateQrDonate = async () => {
         try {
@@ -353,8 +338,12 @@ function QrDonateTab({ onClose }: { onClose: () => void }) {
                 donorId: user?.userId ?? null,
                 donorName: user?.fullName || user?.username || "Anonymous",
                 amount: Number(amount),
-                message
+                message,
+                methodId : 1
             });
+
+            console.log("QRTab")
+            console.log(res)
 
             setPaymentInfo(res.data);
             setPaymentStatus(res.data.status);
