@@ -6,7 +6,8 @@ type Props = {
 };
 
 export type FptTtsPlayerHandle = {
-    speak: (params: { enabled: boolean; text: string; volume: number }) => Promise<void>;
+    speak: (params: { enabled: boolean; text: string; volume: number }) => Promise<boolean>;
+    stop: () => void;
 };
 
 type FptTtsResponse = {
@@ -63,30 +64,69 @@ const waitUntilAudioReady = (audio: HTMLAudioElement, src: string) =>
         audio.load();
     });
 
+const waitUntilPlaybackEnds = (audio: HTMLAudioElement) =>
+    new Promise<void>((resolve, reject) => {
+        let settled = false;
+
+        const cleanup = () => {
+            audio.removeEventListener("ended", handleEnded);
+            audio.removeEventListener("error", handleError);
+            audio.removeEventListener("abort", handleAbort);
+            audio.removeEventListener("pause", handlePause);
+        };
+
+        const finish = (callback: () => void) => {
+            if (settled) {
+                return;
+            }
+
+            settled = true;
+            cleanup();
+            callback();
+        };
+
+        const handleEnded = () => finish(resolve);
+        const handleError = () => finish(() => reject(new Error("Phat audio FPT that bai.")));
+        const handleAbort = () => finish(() => reject(new Error("Audio FPT bi huy.")));
+        const handlePause = () => {
+            if (audio.ended) {
+                finish(resolve);
+            }
+        };
+
+        audio.addEventListener("ended", handleEnded, { once: true });
+        audio.addEventListener("error", handleError, { once: true });
+        audio.addEventListener("abort", handleAbort, { once: true });
+        audio.addEventListener("pause", handlePause);
+    });
+
 const FptTtsPlayer = forwardRef<FptTtsPlayerHandle, Props>(({ onError }, ref) => {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const requestRef = useRef(0);
 
+    const stopCurrentAudio = () => {
+        audioRef.current?.pause();
+        audioRef.current = null;
+    };
+
     useEffect(() => {
         return () => {
-            audioRef.current?.pause();
-            audioRef.current = null;
+            requestRef.current += 1;
+            stopCurrentAudio();
         };
     }, []);
 
     useImperativeHandle(ref, () => ({
+        stop: () => {
+            requestRef.current += 1;
+            stopCurrentAudio();
+        },
         speak: async ({ enabled, text, volume }) => {
             if (!enabled || !text.trim()) {
-                console.log("[FPT TTS] skipped", { enabled, hasText: !!text.trim() });
-                return;
+                return false;
             }
 
             const requestId = ++requestRef.current;
-
-            const stopCurrentAudio = () => {
-                audioRef.current?.pause();
-                audioRef.current = null;
-            };
 
             try {
                 onError?.("");
@@ -102,28 +142,25 @@ const FptTtsPlayer = forwardRef<FptTtsPlayerHandle, Props>(({ onError }, ref) =>
                     audio.pause();
                     audio.currentTime = 0;
                 } catch {
-                    // If priming fails, we still continue and try normal playback.
+                    // If priming fails, continue and try normal playback.
                 }
 
-                console.log("[FPT TTS] request backend", { text });
                 const response = await convertTextToSpeech({ text });
                 const data = response.data as FptTtsResponse;
 
-                console.log("[FPT TTS] backend response", data);
-
                 if (data.error !== 0 || !data.async) {
-                    throw new Error(data.message || "Backend chưa trả về file audio từ FPT.");
+                    throw new Error(data.message || "Backend chua tra ve file audio tu FPT.");
                 }
 
                 let audioReady = false;
                 for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt += 1) {
                     if (requestId !== requestRef.current) {
-                        return;
+                        return false;
                     }
 
                     try {
                         if (!audioRef.current) {
-                            return;
+                            return false;
                         }
 
                         await waitUntilAudioReady(audioRef.current, buildCacheBustedUrl(data.async));
@@ -139,11 +176,11 @@ const FptTtsPlayer = forwardRef<FptTtsPlayerHandle, Props>(({ onError }, ref) =>
                 }
 
                 if (!audioReady) {
-                    throw new Error("File audio từ FPT chưa sẵn sàng, vui lòng thử lại.");
+                    throw new Error("File audio tu FPT chua san sang, vui long thu lai.");
                 }
 
                 if (requestId !== requestRef.current || !audioRef.current) {
-                    return;
+                    return false;
                 }
 
                 audioRef.current.muted = false;
@@ -151,13 +188,19 @@ const FptTtsPlayer = forwardRef<FptTtsPlayerHandle, Props>(({ onError }, ref) =>
                 audioRef.current.currentTime = 0;
 
                 await audioRef.current.play();
+                await waitUntilPlaybackEnds(audioRef.current);
+
+                return requestId === requestRef.current;
             } catch (err) {
                 console.error("[FPT TTS] error", err);
+
                 if (requestId === requestRef.current) {
                     onError?.(
-                        err instanceof Error ? err.message : "Không thể phát giọng đọc FPT."
+                        err instanceof Error ? err.message : "Khong the phat giong doc FPT."
                     );
                 }
+
+                return false;
             }
         }
     }), [onError]);

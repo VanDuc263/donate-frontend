@@ -1,126 +1,29 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import DonateOverlayPage, { OverlayPreviewConfig } from "../DonateOverlayPage";
+import DonateOverlayPage from "../DonateOverlayPage";
 import FptTtsPlayer, { FptTtsPlayerHandle } from "./FptTtsPlayer";
 import { RootState } from "../../app/store";
 import { getObsSetting, updateObsSetting } from "../../features/streamer/streamerApi";
-import previewGif from "../../assets/images/animations/anhdong.gif";
-import altPreviewGif from "../../assets/images/animations/image_01.gif";
-
-declare const require: {
-    context: (
-        path: string,
-        deep?: boolean,
-        filter?: RegExp
-    ) => {
-        keys: () => string[];
-        <T>(id: string): T;
-    };
-};
+import {
+    builtInSoundOptions,
+    defaultObsConfig,
+    FIXED_ALERT_CONTENT_TEMPLATE,
+    getImageUrlByAssetId,
+    getSoundUrlFromConfig,
+    imageOptions,
+    mergeObsConfig,
+    normalizeAlertContent,
+    ObsConfig
+} from "./donateObsShared";
 
 type SectionTab = "content" | "image" | "sound";
-
-type BuiltInSoundOption = {
-    id: number;
-    label: string;
-    url: string;
-};
-
-type ImageOption = {
-    id: number;
-    url: string;
-};
-
-const FIXED_ALERT_CONTENT_TEMPLATE = "{name}\n\u0111\u00e3 donate {amount} \u0111\u1ed3ng cho b\u1ea1n.\n{message}";
-
-type ObsConfig = OverlayPreviewConfig & {
-    tts: {
-        volume: number;
-        enabled: boolean;
-        min_amount: number;
-    };
-    alert: {
-        image: {
-            enabled: boolean;
-            asset_id: number;
-        };
-        sound: {
-            volume: number;
-            enabled: boolean;
-            asset_id: number;
-            custom_name?: string;
-            custom_url?: string;
-        };
-        content: string;
-        duration: number;
-        position: string;
-    };
-    style: {
-        font: {
-            name_size: number;
-            message_size: number;
-        };
-        colors: {
-            text: string;
-            amount: string;
-            message: string;
-            background: string;
-        };
-    };
-    filter: {
-        link: boolean;
-        spam: boolean;
-        keywords: string[];
-    };
-    leaderboard: {
-        enabled: boolean;
-        min_amount: number;
-    };
-};
-
-const defaultConfig: ObsConfig = {
-    tts: { volume: 80, enabled: true, min_amount: 8000 },
-    alert: {
-        image: { enabled: true, asset_id: 2 },
-        sound: { volume: 80, enabled: true, asset_id: 1, custom_name: "", custom_url: "" },
-        content: "{name}\nđã donate {amount} đồng cho bạn.\n{message}",
-        duration: 10,
-        position: "center"
-    },
-    style: {
-        font: { name_size: 18, message_size: 16 },
-        colors: {
-            text: "#7dd3fc",
-            amount: "#facc15",
-            message: "#e5e7eb",
-            background: "#020617"
-        }
-    },
-    filter: { link: true, spam: true, keywords: [] },
-    leaderboard: { enabled: true, min_amount: 5000 }
-};
-
-const soundContext = require.context("../../assets/images/sounds", false, /\.(mp3|wav|ogg|m4a)$/);
-const builtInSoundOptions: BuiltInSoundOption[] = soundContext
-    .keys()
-    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
-    .map((filePath, index) => ({
-        id: index + 1,
-        label: filePath.replace("./", "").replace(/\.[^.]+$/, ""),
-        url: soundContext<string>(filePath)
-    }));
-
-const imageOptions: ImageOption[] = [
-    { id: 1, url: previewGif },
-    { id: 2, url: altPreviewGif }
-];
 
 const DonateObsSettings = () => {
     const streamer = useSelector((state: RootState) => state.auth.streamer);
     const token = streamer?.token || "ta_ziu_cg2jSvnfFVCVFQ";
 
     const [sectionTab, setSectionTab] = useState<SectionTab>("content");
-    const [config, setConfig] = useState<ObsConfig>(defaultConfig);
+    const [config, setConfig] = useState<ObsConfig>(defaultObsConfig);
     const [loading, setLoading] = useState(false);
     const [saved, setSaved] = useState(false);
     const [soundError, setSoundError] = useState("");
@@ -142,17 +45,18 @@ const DonateObsSettings = () => {
     const previewAmountNumber = 100000;
     const customSoundSelected =
         config.alert.sound.asset_id === 0 && Boolean(config.alert.sound.custom_url);
-    const selectedImage =
-        imageOptions.find((item) => item.id === config.alert.image.asset_id)?.url || imageOptions[0].url;
+    const selectedImage = getImageUrlByAssetId(config.alert.image.asset_id);
 
     useEffect(() => {
-        setConfig((prev) => ({
-            ...prev,
-            alert: {
-                ...prev.alert,
-                content: normalizeAlertContent(prev.alert.content || FIXED_ALERT_CONTENT_TEMPLATE)
-            }
-        }));
+        setConfig((prev) =>
+            mergeObsConfig({
+                ...prev,
+                alert: {
+                    ...prev.alert,
+                    content: normalizeAlertContent(prev.alert.content || FIXED_ALERT_CONTENT_TEMPLATE)
+                }
+            })
+        );
     }, []);
 
     const copyLink = async (value: string) => {
@@ -166,12 +70,12 @@ const DonateObsSettings = () => {
     const formatAmountForTts = (amount: number) => {
         if (amount >= 1000000) {
             const millions = amount / 1000000;
-            return `${millions}`.replace(".", ",") + " tri\u1ec7u";
+            return `${millions}`.replace(".", ",") + " triệu";
         }
 
         if (amount >= 1000) {
             const thousands = amount / 1000;
-            return `${thousands}`.replace(".", ",") + " ngh\u00ecn";
+            return `${thousands}`.replace(".", ",") + " nghìn";
         }
 
         return `${amount}`;
@@ -194,99 +98,16 @@ const DonateObsSettings = () => {
             .trim();
     };
 
-    const normalizeAlertContent = (value?: string) => {
-        const lines = (value || "")
-            .split(/\r?\n/)
-            .map((line) => line.trim());
-
-        const normalizedLines = [
-            lines[0] || "{name}",
-            lines[1] || "\u0111\u00e3 donate {amount} \u0111\u1ed3ng cho b\u1ea1n.",
-            lines[2] || "{message}"
-        ];
-
-        return normalizedLines.join("\n");
-    };
-
-    const formatAmountForSpeech = (amount: number) => {
-        if (amount >= 1000000) {
-            const millions = amount / 1000000;
-            return `${millions}`.replace(".", ",") + " triệu";
-        }
-
-        if (amount >= 1000) {
-            const thousands = amount / 1000;
-            return `${thousands}`.replace(".", ",") + " nghìn";
-        }
-
-        return `${amount}`;
-    };
-
-    const buildVietnameseTtsText = () => {
-        const spokenAmount = `${formatAmountForSpeech(previewAmountNumber)} đồng`;
-
-        const spokenMessage = (previewDonation.message || "")
-            .replace(/https?:\/\/\S+/gi, "")
-            .replace(/\s+/g, " ")
-            .trim();
-
-        if (spokenMessage) {
-            return `${previewDonation.donorName} vá»«a donate ${spokenAmount}. Lá»i nháº¯n: ${spokenMessage}`;
-        }
-
-        return `${previewDonation.donorName} vá»«a donate ${spokenAmount}.`;
-    };
-
     useEffect(() => {
         const fetchConfig = async () => {
             const response = await getObsSetting();
             const data = response.data?.config || {};
 
-            setConfig({
-                ...defaultConfig,
-                ...data,
-                alert: {
-                    ...defaultConfig.alert,
-                    ...data.alert,
-                    image: {
-                        ...defaultConfig.alert.image,
-                        ...data.alert?.image
-                    },
-                    sound: {
-                        ...defaultConfig.alert.sound,
-                        ...data.alert?.sound
-                    },
-                    content: normalizeAlertContent(data.alert?.content || FIXED_ALERT_CONTENT_TEMPLATE)
-                },
-                tts: {
-                    ...defaultConfig.tts,
-                    ...data.tts
-                },
-                style: {
-                    ...defaultConfig.style,
-                    ...data.style,
-                    font: {
-                        ...defaultConfig.style.font,
-                        ...data.style?.font
-                    },
-                    colors: {
-                        ...defaultConfig.style.colors,
-                        ...data.style?.colors
-                    }
-                },
-                filter: {
-                    ...defaultConfig.filter,
-                    ...data.filter
-                },
-                leaderboard: {
-                    ...defaultConfig.leaderboard,
-                    ...data.leaderboard
-                }
-            });
+            setConfig(mergeObsConfig(data));
             setSoundError("");
         };
 
-        fetchConfig();
+        void fetchConfig();
     }, [streamer]);
 
     const handleSave = async () => {
@@ -372,21 +193,21 @@ const DonateObsSettings = () => {
         }
     };
 
-    const selectBuiltInSound = (sound: BuiltInSoundOption) => {
+    const selectBuiltInSound = (soundId: number, soundUrl: string) => {
         setConfig((prev) => ({
             ...prev,
             alert: {
                 ...prev.alert,
                 sound: {
                     ...prev.alert.sound,
-                    asset_id: sound.id,
+                    asset_id: soundId,
                     custom_name: "",
                     custom_url: ""
                 }
             }
         }));
         setSoundError("");
-        previewSound(sound.url);
+        previewSound(soundUrl);
     };
 
     const selectImage = (imageId: number) => {
@@ -402,14 +223,6 @@ const DonateObsSettings = () => {
         }));
     };
 
-    const getSelectedSoundUrl = () => {
-        if (customSoundSelected) {
-            return config.alert.sound.custom_url;
-        }
-
-        return builtInSoundOptions.find((sound) => sound.id === config.alert.sound.asset_id)?.url;
-    };
-
     const triggerFakeDonate = () => {
         if (previewTimeoutRef.current) {
             window.clearTimeout(previewTimeoutRef.current);
@@ -422,7 +235,7 @@ const DonateObsSettings = () => {
             setPreviewVisible(true);
 
             if (config.alert.sound.enabled) {
-                previewSound(getSelectedSoundUrl());
+                previewSound(getSoundUrlFromConfig(config));
             }
 
             if (config.tts.enabled && previewAmountNumber >= (config.tts.min_amount ?? 0)) {
@@ -430,7 +243,12 @@ const DonateObsSettings = () => {
                     enabled: true,
                     text: buildCleanVietnameseTtsText(),
                     volume: config.tts.volume ?? 80
+                }).then((playedToEnd) => {
+                    previewTimeoutRef.current = window.setTimeout(() => {
+                        setPreviewVisible(false);
+                    }, playedToEnd ? 0 : Math.max(1, config.alert.duration || 1) * 1000);
                 });
+                return;
             }
 
             previewTimeoutRef.current = window.setTimeout(() => {
@@ -462,10 +280,7 @@ const DonateObsSettings = () => {
 
     return (
         <div className="profile-content">
-            <FptTtsPlayer
-                ref={fptTtsRef}
-                onError={setSoundError}
-            />
+            <FptTtsPlayer ref={fptTtsRef} onError={setSoundError} />
             <div className="profile-card obs-card">
                 <div className="obs-header">
                     <div>
@@ -551,7 +366,7 @@ const DonateObsSettings = () => {
                                         }
                                     })
                                 }
-                            ></textarea>
+                            />
                         </div>
 
                         <div className="form-group">
@@ -766,7 +581,7 @@ const DonateObsSettings = () => {
                                     key={sound.id}
                                     type="button"
                                     className={`obs-sound-tile ${config.alert.sound.asset_id === sound.id ? "selected" : ""}`}
-                                    onClick={() => selectBuiltInSound(sound)}
+                                    onClick={() => selectBuiltInSound(sound.id, sound.url)}
                                 >
                                     {sound.label}
                                 </button>

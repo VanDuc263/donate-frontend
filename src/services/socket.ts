@@ -49,9 +49,10 @@ const subscribeWhenConnected = (
     connectWebSocket();
 
     let subscription: StompSubscription | null = null;
+    let unsubscribed = false;
 
     const doSubscribe = () => {
-        if (!stompClient || !isConnected) return;
+        if (unsubscribed || !stompClient || !isConnected) return;
         subscription = callback();
     };
 
@@ -62,7 +63,10 @@ const subscribeWhenConnected = (
     }
 
     return () => {
+        unsubscribed = true;
+        pendingSubscribes = pendingSubscribes.filter((item) => item !== doSubscribe);
         subscription?.unsubscribe();
+        subscription = null;
     };
 };
 
