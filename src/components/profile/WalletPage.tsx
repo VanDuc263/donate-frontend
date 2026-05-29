@@ -77,6 +77,14 @@ const formatMoney = (value?: number) => {
     }).format(value);
 };
 
+const formatNumberDisplay = (value?: number) => {
+    if (value == null) return "0";
+
+    return new Intl.NumberFormat("vi-VN", {
+        maximumFractionDigits: 0,
+    }).format(value);
+};
+
 const formatDateTime = (value: string) =>
     new Intl.DateTimeFormat("vi-VN", {
         hour: "2-digit",
@@ -301,12 +309,12 @@ const WalletPage = () => {
                 <div className="profile-wallet-summary">
                     <div className="wallet-summary-card primary">
                         <span>Khả dụng</span>
-                        <strong>{walletLoading ? "Đang tải..." : formatMoney(balance)}</strong>
+                        <strong>{walletLoading ? "Đang tải..." : formatNumberDisplay(balance)}</strong>
                     </div>
 
                     <div className="wallet-summary-card">
                         <span>Tạm giữ</span>
-                        <strong>{walletLoading ? "Đang tải..." : formatMoney(frozenBalance)}</strong>
+                        <strong>{walletLoading ? "Đang tải..." : formatNumberDisplay(frozenBalance)}</strong>
                     </div>
                 </div>
 

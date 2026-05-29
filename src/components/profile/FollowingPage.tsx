@@ -85,24 +85,22 @@ const FollowingPage = () => {
         <div className="profile-content">
             <div className="profile-card following-card">
                 <div className="following-head">
-                    <h2>Danh sach theo doi</h2>
+                    <h2>Danh sách theo dõi</h2>
                     <p>
-                        Quan ly nhung streamer ban dang theo doi va xem ai dang
-                        theo doi tai khoan cua ban.
+                        Quản lý những streamer bạn đang theo dõi và xem ai đang
+                        theo dõi tài khoản của bạn.
                     </p>
                 </div>
 
                 <div className="following-stats">
                     <div className="following-stat-box">
-                        <span>Dang theo doi</span>
+                        <span>Đang theo dõi</span>
                         <strong>{following.length}</strong>
-                        <p>Danh sach streamer ban da chon de cap nhat.</p>
                     </div>
 
                     <div className="following-stat-box">
-                        <span>Nguoi theo doi</span>
+                        <span>Người theo doi</span>
                         <strong>{followers.length}</strong>
-                        <p>Nhung tai khoan dang quan tam den trang cua ban.</p>
                     </div>
                 </div>
 
@@ -117,7 +115,7 @@ const FollowingPage = () => {
                             handleChangeTab("following")
                         }
                     >
-                        Dang theo doi
+                        Đang theo dõi
                     </button>
 
                     <button
@@ -130,30 +128,26 @@ const FollowingPage = () => {
                             handleChangeTab("followers")
                         }
                     >
-                        Nguoi theo doi
+                        Người theo dõi
                     </button>
                 </div>
 
                 {loading && (
-                    <p className="following-status">Dang tai du lieu...</p>
+                    <p className="following-status">Đang tải dữ liệu...</p>
                 )}
 
                 <div className="following-section-head">
                     <div>
                         <h3>
                             {isFollowingView
-                                ? "Danh sach dang theo doi"
-                                : "Danh sach nguoi theo doi"}
+                                ? "Danh sách streamer đang theo dõi"
+                                : "Danh sách người theo dõi"}
                         </h3>
-                        <p>
-                            {isFollowingView
-                                ? "Mo trang streamer de xem thong tin moi nhat va ung ho nhanh hon."
-                                : "Nhung tai khoan da bam theo doi de nhan cap nhat tu ban."}
-                        </p>
+
                     </div>
 
                     <span className="following-badge">
-                        {currentCount} ket qua
+                        {currentCount} kết quả
                     </span>
                 </div>
 
@@ -182,7 +176,7 @@ const FollowingPage = () => {
                                         Streamer
                                     </span>
 
-                                    <p>{item.bio || "Chua co mo ta"}</p>
+                                    <p>{item.bio || "Chưa có mô tả"}</p>
 
                                     <Link
                                         className="following-link"
@@ -198,11 +192,8 @@ const FollowingPage = () => {
 
                 {isFollowingView && !loading && following.length === 0 && (
                     <div className="following-empty-state">
-                        <h3>Ban chua theo doi ai</h3>
-                        <p>
-                            Khi ban theo doi streamer, danh sach se hien thi o
-                            day de ban truy cap nhanh hon.
-                        </p>
+                        <h3>Bạn chưa theo dõi ai</h3>
+
                     </div>
                 )}
 
@@ -222,7 +213,6 @@ const FollowingPage = () => {
 
                                     <div>
                                         <h4>{item.followerName}</h4>
-                                        <span>ID: {item.followerId}</span>
                                     </div>
                                 </div>
 
@@ -230,7 +220,6 @@ const FollowingPage = () => {
                                     <span className="following-type follower-type">
                                         Follower
                                     </span>
-                                    <p>Da theo doi ban</p>
                                 </div>
                             </div>
                         ))}
@@ -239,10 +228,10 @@ const FollowingPage = () => {
 
                 {!isFollowingView && !loading && followers.length === 0 && (
                     <div className="following-empty-state">
-                        <h3>Chua co nguoi theo doi</h3>
+                        <h3>Chưa có người theo dõi</h3>
                         <p>
-                            Khi co nguoi quan tam va theo doi tai khoan cua ban,
-                            thong tin se xuat hien tai day.
+                            Khi có người quan tâm va theo dõi tài khoản của bạn,
+                            thông tin sẽ xuất hiện tại đây.
                         </p>
                     </div>
                 )}

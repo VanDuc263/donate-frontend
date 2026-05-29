@@ -36,6 +36,70 @@ const socialPlatformMeta: Record<
     ZALO: { label: "Zalo", icon: mdiAlphaZCircle, className: "zalo" },
 };
 
+const formatDonationAmount = (value?: number) => {
+    if (value == null) return "0đ";
+
+    return new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+        maximumFractionDigits: 0,
+    }).format(value);
+};
+
+const formatDisplayNumber = (value?: number) => {
+    if (value == null) return "0";
+
+    return new Intl.NumberFormat("vi-VN", {
+        maximumFractionDigits: 0,
+    }).format(value);
+};
+
+const parseDonationDate = (value?: string | number[] | null) => {
+    if (!value) return null;
+
+    if (Array.isArray(value)) {
+        const [
+            year,
+            month = 1,
+            day = 1,
+            hour = 0,
+            minute = 0,
+            second = 0,
+            nano = 0,
+        ] = value;
+
+        const date = new Date(
+            year,
+            month - 1,
+            day,
+            hour,
+            minute,
+            second,
+            Math.floor(nano / 1000000)
+        );
+
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    const date = new Date(String(value).trim());
+    return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const formatDonationDate = (value?: string | number[] | null) => {
+    const date = parseDonationDate(value);
+
+    if (!date) return "Không rõ thời gian";
+
+    const now = Date.now();
+    if (now - date.getTime() < 60_000) {
+        return "Vừa tạo";
+    }
+
+    const pad = (num: number) => String(num).padStart(2, "0");
+
+    return `${pad(date.getHours())}:${pad(date.getMinutes())},${pad(date.getDate())}-${pad(date.getMonth() + 1)}-${String(date.getFullYear()).slice(-2)}`;
+};
+
 const StreamerDetail = () => {
     const { token } = useParams();
     const dispatch = useDispatch<AppDispatch>();
@@ -45,6 +109,8 @@ const StreamerDetail = () => {
     );
 
     const donations = useSelector((state: any) => state.donate.donations);
+
+    console.log(donations)
 
     const [showDonate, setShowDonate] = useState(false);
     const [topDonors, setTopDonors] = useState<any[]>([]);
@@ -303,9 +369,9 @@ const StreamerDetail = () => {
                             ) : (
                                 topDonors.map((d, index) => (
                                     <div key={index} className="donator-item">
-                                        <span>#{index + 1}</span>
-                                        <span>{d.donorName}</span>
-                                        <span>{d.totalAmount} VND</span>
+                                        <span className="donator-rank">#{index + 1}</span>
+                                        <span className="donator-name">{d.donorName}</span>
+                                        <span className="donator-amount">{formatDisplayNumber(d.totalAmount)}</span>
                                     </div>
                                 ))
                             )}
@@ -321,15 +387,39 @@ const StreamerDetail = () => {
                         {showDonate && <DonateForm onClose={closeDonate} />}
 
                         <div className="donation-feed">
-                            {donations.map((d: any, index: number) => (
-                                <div key={index} className="donation-item">
-                                    <div className="dot" />
-                                    <div>
-                                        <p>{d.donorName}</p>
-                                        <p>Donate {d.amount} • vừa xong</p>
-                                    </div>
+                            <div className="donation-feed-header">
+                                <h3>Gần đây</h3>
+                            </div>
+
+                            {donations.length === 0 ? (
+                                <div className="donation-feed-empty">
+                                    Chưa có lượt donate nào. Hãy là người ủng hộ đầu tiên nhé.
                                 </div>
-                            ))}
+                            ) : (
+                                donations.map((d: any, index: number) => (
+                                    <div key={index} className="donation-item">
+                                        <div className="donation-avatar">
+                                            {(d.donorName || "?").charAt(0).toUpperCase()}
+                                        </div>
+                                        <div className="donation-content">
+                                            <div className="donation-meta">
+                                                <span className="donation-name">
+                                                    {d.donorName || "Ẩn danh"}
+                                                </span>
+                                                <span className="donation-time">
+                                                    {formatDonationDate(d.createdAt)}
+                                                </span>
+                                            </div>
+                                            <p className="donation-summary">
+                                                Donate <span className="donation-amount">{formatDonationAmount(d.amount)}</span> với lời nhắn
+                                            </p>
+                                            <p className="donation-message">
+                                                {d.message?.trim() || "Không có lời nhắn"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>
