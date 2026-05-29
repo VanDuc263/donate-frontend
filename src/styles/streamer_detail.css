@@ -444,3 +444,8 @@
     opacity: .65;
     cursor: not-allowed;
 }
+
+
+.following-btn{
+    background-color: #4f8cff !important;
+}

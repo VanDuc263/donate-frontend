@@ -23,7 +23,7 @@ import {
 } from "../../donate/donateSlice";
 import { subscribeDonate } from "../../../services/socket";
 import { followStreamer, unfollowStreamer } from "../streamerApi";
-import { fetchStreamer } from "../streamerSlice";
+import {decreaseFollowers, fetchStreamer, increaseFollowers} from "../streamerSlice";
 
 const socialPlatformMeta: Record<
     string,
@@ -101,6 +101,7 @@ const StreamerDetail = () => {
         };
     }, [token]);
 
+
     useEffect(() => {
         if (!streamerDetail?.streamerId) return;
 
@@ -159,13 +160,19 @@ const StreamerDetail = () => {
             setFollowLoading(true);
 
             if (isFollowing) {
+
+
                 await unfollowStreamer(token);
                 setIsFollowing(false);
+
+                dispatch(decreaseFollowers())
+
                 return;
             }
 
             await followStreamer(token);
             setIsFollowing(true);
+            dispatch(increaseFollowers())
         } catch (error) {
             console.log(error);
         } finally {
@@ -202,6 +209,8 @@ const StreamerDetail = () => {
         (item: any) => item?.visible && item?.url
     );
 
+
+
     return (
         <div className="streamer-page">
             <div className="cover" style={coverStyle}>
@@ -217,7 +226,7 @@ const StreamerDetail = () => {
                                 />
                                 <div>
                                     <h2>{streamerDetail?.displayName}</h2>
-                                    <p>{streamerDetail?.followersCount || 0} followers</p>
+                                    <p>{streamerDetail?.followers || 0} followers</p>
                                 </div>
                             </>
                         )}
@@ -228,7 +237,7 @@ const StreamerDetail = () => {
                             Donate
                         </button>
 
-                        <button onClick={handleFollowToggle} disabled={followLoading}>
+                        <button className={isFollowing ? "following-btn" : ""} onClick={handleFollowToggle} disabled={followLoading}>
                             {isFollowing ? "Đang theo dõi" : "Theo dõi"}
                         </button>
 

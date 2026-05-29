@@ -63,10 +63,10 @@ const streamerSlice = createSlice({
     initialState,
     reducers: {
         increaseFollowers: (state) => {
-            if (state.streamerDetail) state.streamerDetail.followersCount += 1;
+            if (state.streamerDetail) state.streamerDetail.followers += 1;
         },
         decreaseFollowers: (state) => {
-            if (state.streamerDetail) state.streamerDetail.followersCount -= 1;
+            if (state.streamerDetail) state.streamerDetail.followers -= 1;
         },
     },
     extraReducers: (builder) => {
