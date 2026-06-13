@@ -66,9 +66,12 @@
 }
 
 .profile-menu .logout {
+    margin-top : 20px;
     color: #ef4444;
 }
-
+.profile-menu .logout:hover{
+    cursor : pointer;
+}
 /* ===== CONTENT ===== */
 .profile-content {
     flex: 1;

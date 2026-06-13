@@ -36,15 +36,15 @@ const Streamers = () => {
             </div>
 
             <div className="streamers-rail">
-                {topStreamers.map((s: any, i: number) => (
+                {topStreamers.slice(0, 8).map((s: any, i: number) => (
                     <Link
                         to={`/streamer/${s.token}`}
                         key={s.id || s.streamerId}
-                        className={`card ${i === 0 ? "featured" : ""}`}
+                        className="card"
                     >
-                        <span className="rank">#{i + 1}</span>
                         <img src={s.avatar} alt={s.displayName} />
-                        <h3>{s.displayName}</h3>
+                        <div className="rank">{i + 1}</div>
+                        <h3 className="streamers-rail__name">{s.displayName}</h3>
                         <p className="money">{convertAmount(s.totalAmount)} VND</p>
                     </Link>
                 ))}

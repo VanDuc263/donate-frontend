@@ -58,6 +58,10 @@ export const savePaymentAccount = async (payload : any) => {
     return axiosClient.post('api/payment-account/save', payload)
 
 }
+export const getBankAccount = async () => {
+    return axiosClient.get('api/payment-account/bank-account')
+
+}
 export const getQrUrl = async () => {
     return axiosClient.get('api/payment-account/qr')
 }

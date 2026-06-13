@@ -337,17 +337,17 @@ const Header = () => {
         {
             to: "/account/profile",
             icon: mdiAccountCircleOutline,
-            title: "Ho so",
+            title: "Hồ sơ",
         },
         {
             to: "/account/donations",
             icon: mdiHistory,
-            title: "Lich su donate",
+            title: "Lịch sử donate",
         },
         {
             to: "/account/following",
             icon: mdiHeartOutline,
-            title: "Dang theo doi",
+            title: "Đang theo dõi",
         },
     ];
 
@@ -361,14 +361,14 @@ const Header = () => {
               {
                   to: "/account/profile/bio",
                   icon: mdiCogOutline,
-                  title: "Cai dat streamer",
+                  title: "Cài đặt streamer",
               },
           ]
         : [
               {
                   to: "/account/create-streamer",
                   icon: mdiPlusCircleOutline,
-                  title: "Tao trang ZyScan",
+                  title: "Tạo trang ZyScan",
               },
           ];
 
@@ -729,12 +729,12 @@ const Header = () => {
                                     <p className="dropdown-account-name">
                                         {user?.fullName ||
                                             user?.username ||
-                                            "Nguoi dung"}
+                                            "Người dùng"}
                                     </p>
 
                                     <span className="dropdown-account-email">
                                         {user?.email ||
-                                            "Tai khoan ZyScan"}
+                                            "Tai khoản ZyScan"}
                                     </span>
                                 </div>
 
@@ -806,7 +806,7 @@ const Header = () => {
                                 </Link>
 
                                 <Link to="/account/following">
-                                    Theo dõi
+                                    theo dõi
                                 </Link>
 
                                 <hr />
@@ -820,7 +820,7 @@ const Header = () => {
                                         path={mdiLogout}
                                         size={0.85}
                                     />
-                                    <span>Dang xuat</span>
+                                    <span>Đăng xuất</span>
                                 </button>
 
                                 <button

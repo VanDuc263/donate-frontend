@@ -26,6 +26,7 @@ export const fetchTopStreamer = createAsyncThunk(
     async (_,{rejectWithValue}) => {
         try {
             const res = await getTopStreamer();
+            console.log(res.data)
             return res.data;
         }catch (err : any){
             return rejectWithValue(err.response?.data || "Error");

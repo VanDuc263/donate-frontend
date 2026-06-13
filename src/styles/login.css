@@ -82,15 +82,13 @@
 .divider::before {
     left: 0;
 }
+
 .divider::after {
     right: 0;
 }
 
 /* SOCIAL */
-.social-login {
-    display: flex;
-    gap: 10px;
-}
+
 
 .social-login button {
     flex: 1;

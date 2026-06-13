@@ -89,10 +89,7 @@ const Login = () => {
                         onError={() => console.log("Google login failed")}
                     />
 
-                    <button className="facebook">
-                        <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" />
-                        Đăng nhập Facebook
-                    </button>
+
                 </div>
 
                 <div className="divider">Chưa có tài khoản?</div>

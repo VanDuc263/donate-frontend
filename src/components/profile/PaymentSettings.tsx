@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../app/store";
-import {savePaymentAccount} from "../../features/streamer/streamerApi";
+import { getBankAccount, savePaymentAccount } from "../../features/streamer/streamerApi";
 
 type PaymentMethod = {
     name: string;
@@ -11,9 +11,21 @@ type PaymentMethod = {
     connected: boolean;
 };
 
+type BankAccountResponse = {
+    id?: number;
+    providerType?: string;
+    providerCode?: string;
+    accountNo?: string;
+    accountName?: string;
+    streamerId?: number;
+    createdAt?: string | null;
+};
+
+const BANK_PAYMENT_METHOD = "Ngân hàng (QR Code)";
+
 const paymentMethods: PaymentMethod[] = [
     {
-        name: "Ngân hàng (QR Code)",
+        name: BANK_PAYMENT_METHOD,
         fee: "Phí 0%",
         accent: "#f59e0b",
         short: "QR",
@@ -56,21 +68,41 @@ const banks = [
 ];
 
 const PaymentSettings = () => {
-    const streamer = useSelector((state: RootState) => state.auth.streamer);
     const user = useSelector((state: RootState) => state.auth.user);
-
-
 
     const [showBankModal, setShowBankModal] = useState(false);
     const [bank, setBank] = useState("MBBank");
     const [accountNumber, setAccountNumber] = useState("");
     const [accountHolder, setAccountHolder] = useState(user?.fullName || "");
+    const [bankAccountLoading, setBankAccountLoading] = useState(false);
 
+    const syncBankForm = (bankAccount?: BankAccountResponse | null) => {
+        const providerCode = bankAccount?.providerCode;
+        const nextBank = providerCode && banks.includes(providerCode) ? providerCode : "MBBank";
 
-    const handleSavePayment = async () => {
+        setBank(nextBank);
+        setAccountNumber(bankAccount?.accountNo || "");
+        setAccountHolder(bankAccount?.accountName || user?.fullName || "");
+    };
+
+    const handleOpenBankModal = async () => {
+        setShowBankModal(true);
+        setBankAccountLoading(true);
 
         try {
+            const response = await getBankAccount();
+            syncBankForm(response?.data);
+        } catch (error) {
+            console.error(error);
+            syncBankForm(null);
+            alert("Không lấy được thông tin ngân hàng đã cài đặt");
+        } finally {
+            setBankAccountLoading(false);
+        }
+    };
 
+    const handleSavePayment = async () => {
+        try {
             const payload = {
                 providerType: "BANK",
                 providerCode: bank,
@@ -78,24 +110,26 @@ const PaymentSettings = () => {
                 accountName: accountHolder,
                 apiKey: "",
                 secretKey: "",
-                qrTemplate: ""
+                qrTemplate: "",
             };
 
             const response = await savePaymentAccount(payload);
 
             console.log(response.data);
-
             alert("Lưu tài khoản thành công");
-
             setShowBankModal(false);
-
         } catch (error) {
-
             console.error(error);
-
             alert("Có lỗi xảy ra");
         }
     };
+
+    useEffect(() => {
+        if (!showBankModal) {
+            setAccountHolder(user?.fullName || "");
+        }
+    }, [showBankModal, user?.fullName]);
+
     return (
         <div className="profile-content">
             <div className="profile-card payment-card">
@@ -112,7 +146,6 @@ const PaymentSettings = () => {
                         <p>Bước 1: Thêm thông tin tài khoản ngân hàng hoặc ví nhận tiền.</p>
                         <p>Bước 2: Sao chép mã QR và đường dẫn callback vào trang thanh toán.</p>
                     </div>
-
                 </div>
 
                 <div className="payment-section-title">Các phương thức thanh toán</div>
@@ -142,8 +175,8 @@ const PaymentSettings = () => {
                                     type="button"
                                     className="payment-edit-btn"
                                     onClick={() => {
-                                        if (method.name === "Ngân hàng (QR Code)") {
-                                            setShowBankModal(true);
+                                        if (method.name === BANK_PAYMENT_METHOD) {
+                                            handleOpenBankModal();
                                         }
                                     }}
                                 >
@@ -156,7 +189,7 @@ const PaymentSettings = () => {
                         </article>
                     ))}
 
-                    <button type="button" className="payment-add-card" onClick={() => setShowBankModal(true)}>
+                    <button type="button" className="payment-add-card" onClick={handleOpenBankModal}>
                         + Thêm thanh toán
                     </button>
                 </div>
@@ -186,7 +219,11 @@ const PaymentSettings = () => {
 
                         <div className="form-group">
                             <label>Ngân hàng</label>
-                            <select value={bank} onChange={(e) => setBank(e.target.value)}>
+                            <select
+                                value={bank}
+                                onChange={(e) => setBank(e.target.value)}
+                                disabled={bankAccountLoading}
+                            >
                                 {banks.map((item) => (
                                     <option key={item} value={item}>
                                         {item}
@@ -200,6 +237,7 @@ const PaymentSettings = () => {
                             <input
                                 value={accountNumber}
                                 onChange={(e) => setAccountNumber(e.target.value)}
+                                disabled={bankAccountLoading}
                                 placeholder="Nhập số tài khoản"
                             />
                         </div>
@@ -209,6 +247,7 @@ const PaymentSettings = () => {
                             <input
                                 value={accountHolder}
                                 onChange={(e) => setAccountHolder(e.target.value)}
+                                disabled={bankAccountLoading}
                                 placeholder="Tên chủ tài khoản"
                             />
                         </div>
@@ -217,8 +256,9 @@ const PaymentSettings = () => {
                             type="button"
                             className="payment-modal-update-btn"
                             onClick={handleSavePayment}
+                            disabled={bankAccountLoading}
                         >
-                            Cập nhật
+                            {bankAccountLoading ? "Đang tải..." : "Cập nhật"}
                         </button>
                     </div>
                 </div>
