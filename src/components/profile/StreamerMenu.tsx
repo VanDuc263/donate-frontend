@@ -38,19 +38,18 @@ const StreamerMenu = () => {
 
             <hr />
 
-            <p className="menu-title">Quảng bá</p>
+            <p className="menu-title">Quảng Bá</p>
 
-            <NavLink to="/account/following" className={getClass}>
+            <NavLink to="/account/product-promotion" className={getClass}>
                 Quảng bá sản phẩm
             </NavLink>
 
             <hr />
 
-
             <div className="menu-title">
                 <span>Trang ZyScan</span>
                 <Link to={`/streamer/${token || ""}`} className="badge">
-                    {token || "chua co"} {"\u{1F441}"}
+                    {token || "chưa có"} {"\u{1F441}"}
                 </Link>
             </div>
 
@@ -63,17 +62,12 @@ const StreamerMenu = () => {
             <NavLink to="/account/donate-obs" className={getClass}>
                 Cài Đặt Donate OBS
             </NavLink>
-            <NavLink to="/account/donate-obs" className={getClass}>
+            <NavLink to="/account/blocked-users" className={getClass}>
                 Danh Sách Chặn
             </NavLink>
-            <NavLink to="/account/donate-obs" className={getClass}>
+            <NavLink to="/account/statistics" className={getClass}>
                 Thống kê
             </NavLink>
-
-            {/*<p className="menu-title">Khác</p>*/}
-            {/*<NavLink to="/account/donations" className={getClass}>*/}
-            {/*    Nâng Cao*/}
-            {/*</NavLink>*/}
 
             <span className="logout" onClick={handleLogout}>
                 Đăng xuất

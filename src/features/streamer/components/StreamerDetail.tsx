@@ -22,7 +22,10 @@ import {
     setDonations,
 } from "../../donate/donateSlice";
 import { subscribeDonate } from "../../../services/socket";
-import { followStreamer, unfollowStreamer } from "../streamerApi";
+import {
+    followStreamer,
+    unfollowStreamer,
+} from "../streamerApi";
 import {decreaseFollowers, fetchStreamer, increaseFollowers} from "../streamerSlice";
 
 const socialPlatformMeta: Record<

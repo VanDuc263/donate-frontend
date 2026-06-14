@@ -28,9 +28,13 @@ import ProfileInfo from "../components/profile/ProfileInfo";
 import StreamerBioInfo from "../components/profile/StreamerBioInfo";
 import DonateObsSettings from "../components/profile/DonateObsSettings";
 import PaymentSettings from "../components/profile/PaymentSettings";
+import SePayGuidePage from "../components/profile/SePayGuidePage";
 import DonationHistoryPage from "../components/profile/DonationHistoryPage";
 import FollowingPage from "../components/profile/FollowingPage";
 import WalletPage from "../components/profile/WalletPage";
+import ProductPromotionPage from "../components/profile/ProductPromotionPage";
+import BlockedUsersPage from "../components/profile/BlockedUsersPage";
+import StatisticsPage from "../components/profile/StatisticsPage";
 
 function normalizeRole(role?: string | null) {
     return String(role || "")
@@ -169,6 +173,7 @@ const AppRoute = () => {
                     }
                 >
                     <Route index element={<PaymentSettings />} />
+                    <Route path="sepay-guide" element={<SePayGuidePage />} />
                 </Route>
 
                 <Route
@@ -180,6 +185,17 @@ const AppRoute = () => {
                     }
                 >
                     <Route index element={<DonateObsSettings />} />
+                </Route>
+
+                <Route
+                    path="/account/product-promotion"
+                    element={
+                        <NonAdminRoute>
+                            <UserProfile />
+                        </NonAdminRoute>
+                    }
+                >
+                    <Route index element={<ProductPromotionPage />} />
                 </Route>
 
                 <Route
@@ -222,6 +238,28 @@ const AppRoute = () => {
                     }
                 >
                     <Route index element={<WalletPage />} />
+                </Route>
+
+                <Route
+                    path="/account/blocked-users"
+                    element={
+                        <NonAdminRoute>
+                            <UserProfile />
+                        </NonAdminRoute>
+                    }
+                >
+                    <Route index element={<BlockedUsersPage />} />
+                </Route>
+
+                <Route
+                    path="/account/statistics"
+                    element={
+                        <NonAdminRoute>
+                            <UserProfile />
+                        </NonAdminRoute>
+                    }
+                >
+                    <Route index element={<StatisticsPage />} />
                 </Route>
 
                 <Route path="/streamer/:token" element={<StreamerDetail />} />

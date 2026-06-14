@@ -7,14 +7,18 @@ import { createWithdrawal, getWalletTransactions } from "../../features/wallet/w
 import { getMyWalletThunk } from "../../features/wallet/walletSlice";
 
 type WalletAction = "deposit" | "withdraw";
+type WalletHistoryFilter = "incoming" | "outgoing" | "pending";
+type WalletHistoryDirection = "deposit" | "withdraw" | "pending";
 
 type WalletHistoryItem = {
     id: number;
-    type: WalletAction;
+    type: WalletHistoryDirection;
+    filter: WalletHistoryFilter;
     title: string;
     amount: number;
     note: string;
     time: string;
+    sign: "+" | "-";
 };
 
 type WalletTransactionType =
@@ -129,6 +133,15 @@ const getWalletTransactionMeta = (type: WalletTransactionType) => {
     }
 };
 
+const normalizeTransactionStatus = (status?: string | null) =>
+    String(status || "").trim().toUpperCase();
+
+const isPendingTransaction = (status?: string | null) => {
+    const normalized = normalizeTransactionStatus(status);
+
+    return normalized !== "" && normalized !== "SUCCESS" && normalized !== "COMPLETED";
+};
+
 const buildWalletTransactionNote = (item: WalletTransactionResponseItem) => {
     if (item.referenceCode) {
         return `Mã tham chiếu: ${item.referenceCode}`;
@@ -151,6 +164,7 @@ const WalletPage = () => {
     const walletLoading = useSelector((state: RootState) => state.wallet.loading);
 
     const [walletTab, setWalletTab] = useState<WalletAction>("deposit");
+    const [walletHistoryFilter, setWalletHistoryFilter] = useState<WalletHistoryFilter>("incoming");
     const [walletAmount, setWalletAmount] = useState("");
     const [walletNote, setWalletNote] = useState("");
     const [walletMessage, setWalletMessage] = useState("");
@@ -175,14 +189,22 @@ const WalletPage = () => {
             setWalletHistory(
                 items.map((item) => {
                     const meta = getWalletTransactionMeta(item.type);
+                    const pending = isPendingTransaction(item.status);
+                    const direction = pending ? "pending" : meta.historyType;
 
                     return {
                         id: item.id,
-                        type: meta.historyType,
+                        type: direction,
+                        filter: pending
+                            ? "pending"
+                            : meta.historyType === "deposit"
+                                ? "incoming"
+                                : "outgoing",
                         title: meta.label,
                         amount: item.netAmount ?? item.amount ?? 0,
                         note: buildWalletTransactionNote(item),
                         time: item.createdAt,
+                        sign: meta.historyType === "deposit" ? "+" : "-",
                     };
                 })
             );
@@ -210,12 +232,19 @@ const WalletPage = () => {
     const depositFee = walletTab === "deposit" && amountValue > 0 ? Math.round(amountValue * 0.01) : 0;
     const depositTotal = walletTab === "deposit" && amountValue > 0 ? amountValue + depositFee : 0;
 
-    const historySummary = useMemo(() => {
-        return walletHistory.map((item) => ({
-            ...item,
-            sign: item.type === "deposit" ? "+" : "-",
-        }));
-    }, [walletHistory]);
+    const filteredHistory = useMemo(
+        () => walletHistory.filter((item) => item.filter === walletHistoryFilter),
+        [walletHistory, walletHistoryFilter]
+    );
+
+    const historyCounts = useMemo(
+        () => ({
+            incoming: walletHistory.filter((item) => item.filter === "incoming").length,
+            outgoing: walletHistory.filter((item) => item.filter === "outgoing").length,
+            pending: walletHistory.filter((item) => item.filter === "pending").length,
+        }),
+        [walletHistory]
+    );
 
     const handleCreateDepositQr = async () => {
         if (!amountValue || amountValue <= 0) {
@@ -270,6 +299,7 @@ const WalletPage = () => {
             await dispatch(getMyWalletThunk());
             await fetchWalletHistory();
 
+            setWalletHistoryFilter("pending");
             setWalletMessage(
                 data.transactionCode
                     ? `Đã tạo yêu cầu rút ${data.transactionCode}.`
@@ -302,7 +332,7 @@ const WalletPage = () => {
             <div className="profile-card wallet-page-card">
                 <div className="profile-wallet-head">
                     <div>
-                        <h2>Ví</h2>
+                        <h2>Ví của tôi</h2>
                     </div>
                 </div>
 
@@ -509,16 +539,43 @@ const WalletPage = () => {
                             <div>
                                 <h4>Giao dịch gần đây</h4>
                             </div>
-                            <span>{historySummary.length}</span>
+                            <span>{filteredHistory.length}</span>
+                        </div>
+
+                        <div className="wallet-history-tabs">
+                            <button
+                                type="button"
+                                className={walletHistoryFilter === "incoming" ? "active incoming" : ""}
+                                onClick={() => setWalletHistoryFilter("incoming")}
+                            >
+                                Tiền vào
+                                <strong>{historyCounts.incoming}</strong>
+                            </button>
+                            <button
+                                type="button"
+                                className={walletHistoryFilter === "outgoing" ? "active outgoing" : ""}
+                                onClick={() => setWalletHistoryFilter("outgoing")}
+                            >
+                                Tiền ra
+                                <strong>{historyCounts.outgoing}</strong>
+                            </button>
+                            <button
+                                type="button"
+                                className={walletHistoryFilter === "pending" ? "active pending" : ""}
+                                onClick={() => setWalletHistoryFilter("pending")}
+                            >
+                                Đang xử lý
+                                <strong>{historyCounts.pending}</strong>
+                            </button>
                         </div>
 
                         <div className="wallet-history-list">
                             {walletHistoryLoading && <p className="wallet-inline-message">Đang tải giao dịch...</p>}
                             {!walletHistoryLoading && walletHistoryError && <p className="wallet-inline-message">{walletHistoryError}</p>}
-                            {!walletHistoryLoading && !walletHistoryError && historySummary.length === 0 && (
-                                <p className="wallet-inline-message">Chưa có giao dịch nào.</p>
+                            {!walletHistoryLoading && !walletHistoryError && filteredHistory.length === 0 && (
+                                <p className="wallet-inline-message">Chưa có giao dịch nào trong nhóm này.</p>
                             )}
-                            {!walletHistoryLoading && !walletHistoryError && historySummary.map((item) => (
+                            {!walletHistoryLoading && !walletHistoryError && filteredHistory.map((item) => (
                                 <div className="wallet-history-item" key={item.id}>
                                     <div className="wallet-history-main">
                                         <strong>{item.title}</strong>

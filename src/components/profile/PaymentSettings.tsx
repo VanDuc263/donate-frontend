@@ -1,14 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { RootState } from "../../app/store";
 import { getBankAccount, savePaymentAccount } from "../../features/streamer/streamerApi";
+
+type PaymentMethodStatus = "connected" | "disconnected" | "updating";
 
 type PaymentMethod = {
     name: string;
     fee: string;
     accent: string;
     short: string;
-    connected: boolean;
+    provider: "BANK" | "MOMO" | "PAYPAL" | "BNB";
 };
 
 type BankAccountResponse = {
@@ -22,6 +25,7 @@ type BankAccountResponse = {
 };
 
 const BANK_PAYMENT_METHOD = "Ngân hàng (QR Code)";
+const SEPAY_GUIDE_ROUTE = "/account/payment/sepay-guide";
 
 const paymentMethods: PaymentMethod[] = [
     {
@@ -29,28 +33,28 @@ const paymentMethods: PaymentMethod[] = [
         fee: "Phí 0%",
         accent: "#f59e0b",
         short: "QR",
-        connected: true,
+        provider: "BANK",
     },
     {
-        name: "Ví điện tử Momo",
-        fee: "Miễn phí",
+        name: "Ví điện tử MoMo",
+        fee: "Đang cập nhật",
         accent: "#db2777",
         short: "Mo",
-        connected: true,
+        provider: "MOMO",
     },
     {
-        name: "Paypal",
-        fee: "Miễn phí",
+        name: "PayPal",
+        fee: "Đang cập nhật",
         accent: "#0ea5e9",
         short: "P",
-        connected: true,
+        provider: "PAYPAL",
     },
     {
         name: "Tiền điện tử BNB",
-        fee: "Miễn phí",
+        fee: "Đang cập nhật",
         accent: "#fbbf24",
         short: "BNB",
-        connected: false,
+        provider: "BNB",
     },
 ];
 
@@ -67,6 +71,9 @@ const banks = [
     "MSB",
 ];
 
+const hasConfiguredBankAccount = (bankAccount?: BankAccountResponse | null) =>
+    Boolean(bankAccount?.id || bankAccount?.accountNo || bankAccount?.accountName);
+
 const PaymentSettings = () => {
     const user = useSelector((state: RootState) => state.auth.user);
 
@@ -75,18 +82,19 @@ const PaymentSettings = () => {
     const [accountNumber, setAccountNumber] = useState("");
     const [accountHolder, setAccountHolder] = useState(user?.fullName || "");
     const [bankAccountLoading, setBankAccountLoading] = useState(false);
+    const [bankConfigured, setBankConfigured] = useState(false);
 
-    const syncBankForm = (bankAccount?: BankAccountResponse | null) => {
+    const syncBankForm = useCallback((bankAccount?: BankAccountResponse | null) => {
         const providerCode = bankAccount?.providerCode;
         const nextBank = providerCode && banks.includes(providerCode) ? providerCode : "MBBank";
 
         setBank(nextBank);
         setAccountNumber(bankAccount?.accountNo || "");
         setAccountHolder(bankAccount?.accountName || user?.fullName || "");
-    };
+        setBankConfigured(hasConfiguredBankAccount(bankAccount));
+    }, [user?.fullName]);
 
-    const handleOpenBankModal = async () => {
-        setShowBankModal(true);
+    const loadBankAccount = useCallback(async (showErrorAlert: boolean) => {
         setBankAccountLoading(true);
 
         try {
@@ -95,10 +103,18 @@ const PaymentSettings = () => {
         } catch (error) {
             console.error(error);
             syncBankForm(null);
-            alert("Không lấy được thông tin ngân hàng đã cài đặt");
+
+            if (showErrorAlert) {
+                alert("Không lấy được thông tin ngân hàng đã cài đặt");
+            }
         } finally {
             setBankAccountLoading(false);
         }
+    }, [syncBankForm]);
+
+    const handleOpenBankModal = async () => {
+        setShowBankModal(true);
+        await loadBankAccount(true);
     };
 
     const handleSavePayment = async () => {
@@ -113,11 +129,11 @@ const PaymentSettings = () => {
                 qrTemplate: "",
             };
 
-            const response = await savePaymentAccount(payload);
-
-            console.log(response.data);
+            await savePaymentAccount(payload);
             alert("Lưu tài khoản thành công");
+            setBankConfigured(true);
             setShowBankModal(false);
+            await loadBankAccount(false);
         } catch (error) {
             console.error(error);
             alert("Có lỗi xảy ra");
@@ -129,6 +145,30 @@ const PaymentSettings = () => {
             setAccountHolder(user?.fullName || "");
         }
     }, [showBankModal, user?.fullName]);
+
+    useEffect(() => {
+        loadBankAccount(false);
+    }, [loadBankAccount]);
+
+    const getMethodStatus = (method: PaymentMethod): PaymentMethodStatus => {
+        if (method.provider !== "BANK") {
+            return "updating";
+        }
+
+        return bankConfigured ? "connected" : "disconnected";
+    };
+
+    const renderStatusLabel = (status: PaymentMethodStatus) => {
+        if (status === "connected") {
+            return "Đã kết nối";
+        }
+
+        if (status === "disconnected") {
+            return "Chưa kết nối";
+        }
+
+        return "Đang cập nhật";
+    };
 
     return (
         <div className="profile-content">
@@ -143,54 +183,64 @@ const PaymentSettings = () => {
                 <div className="payment-guide">
                     <div className="payment-guide-text">
                         <h3>Hướng dẫn kết nối thanh toán tự động</h3>
-                        <p>Bước 1: Thêm thông tin tài khoản ngân hàng hoặc ví nhận tiền.</p>
-                        <p>Bước 2: Sao chép mã QR và đường dẫn callback vào trang thanh toán.</p>
+                        <p>Bước 1: Thêm thông tin tài khoản ngân hàng để nhận tiền.</p>
+                        <p>Bước 2: Hệ thống hiện chỉ hỗ trợ cấu hình QR Code ngân hàng qua SePay.</p>
                     </div>
                 </div>
 
                 <div className="payment-section-title">Các phương thức thanh toán</div>
                 <div className="payment-grid">
-                    {paymentMethods.map((method) => (
-                        <article key={method.name} className="payment-method-card">
-                            <div className="payment-method-top">
-                                <div
-                                    className="payment-method-icon"
-                                    style={{ background: method.accent }}
-                                >
-                                    {method.short}
+                    {paymentMethods.map((method) => {
+                        const status = getMethodStatus(method);
+                        const isBankMethod = method.provider === "BANK";
+
+                        return (
+                            <article
+                                key={method.name}
+                                className={`payment-method-card ${isBankMethod ? "" : "payment-method-card-disabled"}`.trim()}
+                            >
+                                <div className="payment-method-top">
+                                    <div
+                                        className="payment-method-icon"
+                                        style={{ background: method.accent }}
+                                    >
+                                        {method.short}
+                                    </div>
+
+                                    <div className="payment-method-meta">
+                                        <h4>{method.name}</h4>
+                                        <span>{method.fee}</span>
+                                    </div>
                                 </div>
 
-                                <div className="payment-method-meta">
-                                    <h4>{method.name}</h4>
-                                    <span>{method.fee}</span>
+                                <div className={`payment-status ${status}`}>
+                                    {renderStatusLabel(status)}
                                 </div>
-                            </div>
 
-                            <div className={`payment-status ${method.connected ? "on" : "off"}`}>
-                                {method.connected ? "Đã kết nối" : "Chưa kết nối"}
-                            </div>
-
-                            <div className="payment-actions">
-                                <button
-                                    type="button"
-                                    className="payment-edit-btn"
-                                    onClick={() => {
-                                        if (method.name === BANK_PAYMENT_METHOD) {
-                                            handleOpenBankModal();
-                                        }
-                                    }}
-                                >
-                                    Sửa thanh toán
-                                </button>
-                                <button type="button" className="payment-icon-btn" aria-label="Xóa">
-                                    ×
-                                </button>
-                            </div>
-                        </article>
-                    ))}
+                                <div className="payment-actions">
+                                    <button
+                                        type="button"
+                                        className="payment-edit-btn"
+                                        onClick={isBankMethod ? handleOpenBankModal : undefined}
+                                        disabled={!isBankMethod}
+                                    >
+                                        {isBankMethod ? "Cấu hình" : "Đang cập nhật"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="payment-icon-btn"
+                                        aria-label={isBankMethod ? "Xóa" : "Đang cập nhật"}
+                                        disabled={!isBankMethod}
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            </article>
+                        );
+                    })}
 
                     <button type="button" className="payment-add-card" onClick={handleOpenBankModal}>
-                        + Thêm thanh toán
+                        {bankConfigured ? "Cập nhật ngân hàng QR" : "Thêm ngân hàng QR"}
                     </button>
                 </div>
             </div>
@@ -201,7 +251,7 @@ const PaymentSettings = () => {
                         <div className="payment-modal-header">
                             <div>
                                 <h3>Cập nhật tài khoản thanh toán</h3>
-                                <p>Quản lý thông tin ngân hàng QR và tài khoản liên kết.</p>
+                                <p>Hệ thống hiện chỉ hỗ trợ tài khoản ngân hàng QR qua SePay.</p>
                             </div>
                             <button
                                 type="button"
@@ -213,7 +263,17 @@ const PaymentSettings = () => {
                         </div>
 
                         <div className="form-group">
-                            <label>Cổng thanh toán</label>
+                            <div className="payment-label-row">
+                                <label>Cổng thanh toán</label>
+                                <Link
+                                    to={SEPAY_GUIDE_ROUTE}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="payment-guide-link"
+                                >
+                                    Xem hướng dẫn cài đặt SePay
+                                </Link>
+                            </div>
                             <input value="Ngân hàng (QR Code) - SePay" readOnly />
                         </div>
 
