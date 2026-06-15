@@ -1,29 +1,23 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import {
+    getMyStatistics,
+    StreamerStatisticPointResponse,
+    StreamerStatisticsResponse,
+} from "../../features/streamer/streamerApi";
 
-type StatisticPoint = {
-    date: string;
-    views: number;
-    revenue: number;
+const toInputDate = (value: Date) => {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, "0");
+    const day = String(value.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
 };
 
-const statisticSeed: StatisticPoint[] = [
-    { date: "2026-06-07", views: 1, revenue: 0 },
-    { date: "2026-06-08", views: 3, revenue: 120000 },
-    { date: "2026-06-09", views: 2, revenue: 0 },
-    { date: "2026-06-10", views: 4, revenue: 250000 },
-    { date: "2026-06-11", views: 1, revenue: 0 },
-    { date: "2026-06-12", views: 6, revenue: 420000 },
-    { date: "2026-06-13", views: 5, revenue: 180000 },
-    { date: "2026-06-14", views: 2, revenue: 0 },
-];
-
-const today = "2026-06-14";
-const defaultStart = "2026-06-07";
-
-const formatDateLabel = (value: string) => {
-    const [year, month, day] = value.split("-");
-    return `${day}/${month}/${year}`;
-};
+const today = toInputDate(new Date());
+const defaultStartDate = (() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 6);
+    return toInputDate(date);
+})();
 
 const formatCompactMoney = (value: number) =>
     new Intl.NumberFormat("vi-VN", {
@@ -42,6 +36,13 @@ const formatAxisMoney = (value: number) => {
     }
 
     return `${value}`;
+};
+
+const getMonthKey = (value: string) => value.slice(0, 7);
+
+const formatMonthLabel = (value: string) => {
+    const [year, month] = value.split("-");
+    return `${month}/${year}`;
 };
 
 type MiniChartProps = {
@@ -65,6 +66,9 @@ const MiniChart = ({
 }: MiniChartProps) => {
     const maxValue = Math.max(...points.map((item) => item.value), 0);
     const hasData = maxValue > 0;
+    const yAxisValues = hasData
+        ? [maxValue, maxValue * 0.66, maxValue * 0.33, 0]
+        : [0, 0, 0, 0];
 
     return (
         <section className="stats-chart-card">
@@ -78,22 +82,34 @@ const MiniChart = ({
 
             <div className="stats-chart-shell">
                 <div className="stats-chart-grid">
-                    {[0, 1, 2, 3].map((item) => (
-                        <span key={item} />
+                    {yAxisValues.map((item, index) => (
+                        <div key={`${title}-grid-${index}`} className="stats-chart-grid-row">
+                            <span className="stats-chart-grid-value">
+                                {valueFormatter(Math.round(item))}
+                            </span>
+                            <span className="stats-chart-grid-line" />
+                        </div>
                     ))}
                 </div>
 
                 {hasData ? (
                     <div className="stats-bars">
                         {points.map((point) => {
-                            const height = Math.max((point.value / maxValue) * 100, point.value > 0 ? 10 : 4);
+                            const normalizedHeight =
+                                maxValue > 0 ? (point.value / maxValue) * 100 : 0;
+                            const height = point.value > 0 ? Math.max(normalizedHeight, 8) : 0;
 
                             return (
                                 <div className="stats-bar-col" key={`${title}-${point.label}`}>
                                     <span className="stats-bar-value">
                                         {valueFormatter(point.value)}
                                     </span>
-                                    <div className={`stats-bar ${accentClass}`} style={{ height: `${height}%` }} />
+                                    <div className="stats-bar-track">
+                                        <div
+                                            className={`stats-bar ${accentClass}`}
+                                            style={{ height: `${height}%` }}
+                                        />
+                                    </div>
                                     <span className="stats-bar-label">{point.label}</span>
                                 </div>
                             );
@@ -108,34 +124,48 @@ const MiniChart = ({
 };
 
 const StatisticsPage = () => {
-    const [draftStartDate, setDraftStartDate] = useState(defaultStart);
+    const [draftStartDate, setDraftStartDate] = useState(defaultStartDate);
     const [draftEndDate, setDraftEndDate] = useState(today);
-    const [startDate, setStartDate] = useState(defaultStart);
+    const [startDate, setStartDate] = useState(defaultStartDate);
     const [endDate, setEndDate] = useState(today);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [statistics, setStatistics] = useState<StreamerStatisticsResponse | null>(null);
 
-    const filteredData = statisticSeed.filter(
-        (item) => item.date >= startDate && item.date <= endDate
-    );
+    useEffect(() => {
+        let ignore = false;
 
-    const totalViews = filteredData.reduce((sum, item) => sum + item.views, 0);
-    const totalRevenue = filteredData.reduce((sum, item) => sum + item.revenue, 0);
-    const bestDay = filteredData.reduce<StatisticPoint | null>((best, item) => {
-        if (!best || item.revenue > best.revenue) {
-            return item;
-        }
+        const fetchStatistics = async () => {
+            try {
+                setLoading(true);
+                setError("");
+                const res = await getMyStatistics(startDate, endDate);
 
-        return best;
-    }, null);
+                if (!ignore) {
+                    setStatistics(res.data);
+                }
+            } catch (err) {
+                console.error(err);
+                if (!ignore) {
+                    setError("Không tải được dữ liệu thống kê.");
+                }
+            } finally {
+                if (!ignore) {
+                    setLoading(false);
+                }
+            }
+        };
 
-    const chartPoints = filteredData.map((item) => ({
-        label: item.date.slice(5).replace("-", "/"),
-        views: item.views,
-        revenue: item.revenue,
-    }));
+        fetchStatistics();
+
+        return () => {
+            ignore = true;
+        };
+    }, [startDate, endDate]);
 
     const handleApply = () => {
         if (draftStartDate > draftEndDate) {
-            alert("Ngày bắt đầu không được lớn hơn ngày kết thúc");
+            window.alert("Ngày bắt đầu không được lớn hơn ngày kết thúc");
             return;
         }
 
@@ -144,25 +174,55 @@ const StatisticsPage = () => {
     };
 
     const handleReset = () => {
-        setDraftStartDate(defaultStart);
+        setDraftStartDate(defaultStartDate);
         setDraftEndDate(today);
-        setStartDate(defaultStart);
+        setStartDate(defaultStartDate);
         setEndDate(today);
     };
+
+    const dailyStats: StreamerStatisticPointResponse[] = statistics?.dailyStats || [];
+    const totalDonations = statistics?.totalDonations || 0;
+    const totalRevenue = statistics?.totalRevenue || 0;
+    const totalFollowers = statistics?.totalFollowers || 0;
+    const shouldGroupByMonth = getMonthKey(startDate) !== getMonthKey(endDate);
+
+    const chartPoints = shouldGroupByMonth
+        ? Object.values(
+              dailyStats.reduce<Record<string, { label: string; donations: number; revenue: number }>>(
+                  (acc, item) => {
+                      const monthKey = getMonthKey(item.date);
+
+                      if (!acc[monthKey]) {
+                          acc[monthKey] = {
+                              label: formatMonthLabel(monthKey),
+                              donations: 0,
+                              revenue: 0,
+                          };
+                      }
+
+                      acc[monthKey].donations += item.donationCount;
+                      acc[monthKey].revenue += item.revenue;
+                      return acc;
+                  },
+                  {}
+              )
+          )
+        : dailyStats.map((item) => ({
+              label: item.date.slice(5).replace("-", "/"),
+              donations: item.donationCount,
+              revenue: item.revenue,
+          }));
 
     return (
         <div className="profile-content">
             <div className="profile-card statistics-card">
                 <div className="statistics-head">
                     <div>
-                        <h2>Thống Kê</h2>
-                        <p>Theo dõi lượt truy cập và doanh thu của trang donate trong khoảng thời gian bạn chọn.</p>
-                    </div>
-                    <div className="statistics-range-note">
-                        <span>Khoảng đang xem</span>
-                        <strong>
-                            {formatDateLabel(startDate)} - {formatDateLabel(endDate)}
-                        </strong>
+                        <h2>Thống kê</h2>
+                        <p>
+                            Theo dõi lượt donate, doanh thu và follower của trang donate
+                            trong khoảng thời gian bạn chọn.
+                        </p>
                     </div>
                 </div>
 
@@ -191,57 +251,71 @@ const StatisticsPage = () => {
                     </div>
 
                     <div className="statistics-toolbar-actions">
-                        <button type="button" className="statistics-apply-btn" onClick={handleApply}>
+                        <button
+                            type="button"
+                            className="statistics-apply-btn"
+                            onClick={handleApply}
+                        >
                             Áp dụng
                         </button>
-                        <button type="button" className="statistics-reset-btn" onClick={handleReset}>
+                        <button
+                            type="button"
+                            className="statistics-reset-btn"
+                            onClick={handleReset}
+                        >
                             Đặt lại
                         </button>
                     </div>
                 </div>
 
+                {error && <div className="promo-saved-badge promo-saved-badge-error">{error}</div>}
+
                 <div className="statistics-summary">
                     <div className="statistics-stat-box">
-                        <span>Lượt truy cập</span>
-                        <strong>{totalViews}</strong>
-                        <p>Tổng số lượt mở trang donate trong khoảng thời gian đang xem.</p>
+                        <span>Lượt donate</span>
+                        <strong>{loading ? "..." : totalDonations}</strong>
+                        <p>Tổng số lượt donate thành công trong khoảng thời gian đang xem.</p>
                     </div>
 
                     <div className="statistics-stat-box">
                         <span>Doanh thu</span>
-                        <strong>{formatCompactMoney(totalRevenue)}</strong>
-                        <p>Tổng số tiền nhận được từ các lượt donate mẫu trong giai đoạn này.</p>
+                        <strong>{loading ? "..." : formatCompactMoney(totalRevenue)}</strong>
+                        <p>Tổng số tiền nhận được từ các lượt donate thành công.</p>
                     </div>
 
                     <div className="statistics-stat-box">
-                        <span>Ngày nổi bật</span>
-                        <strong>{bestDay ? formatDateLabel(bestDay.date) : "--"}</strong>
-                        <p>
-                            {bestDay && bestDay.revenue > 0
-                                ? `Doanh thu cao nhất đạt ${formatCompactMoney(bestDay.revenue)}.`
-                                : "Chưa có ngày nào phát sinh doanh thu trong khoảng này."}
-                        </p>
+                        <span>Follower hiện tại</span>
+                        <strong>{loading ? "..." : totalFollowers}</strong>
+                        <p>Số lượng người theo dõi hiện có của trang donate.</p>
                     </div>
                 </div>
 
                 <div className="statistics-chart-list">
                     <MiniChart
-                        title="Lượt truy cập"
+                        title="Lượt donate"
                         accentClass="views"
-                        total={`${totalViews}`}
-                        subtitle="Biểu đồ tổng lượt xem theo ngày"
+                        total={loading ? "..." : `${totalDonations}`}
+                        subtitle={
+                            shouldGroupByMonth
+                                ? "Biểu đồ số lượt donate thành công theo tháng"
+                                : "Biểu đồ số lượt donate thành công theo ngày"
+                        }
                         points={chartPoints.map((item) => ({
                             label: item.label,
-                            value: item.views,
+                            value: item.donations,
                         }))}
-                        emptyLabel="Chưa có dữ liệu lượt truy cập trong khoảng thời gian này."
+                        emptyLabel="Chưa có lượt donate thành công trong khoảng thời gian này."
                     />
 
                     <MiniChart
                         title="Doanh thu"
                         accentClass="revenue"
-                        total={formatCompactMoney(totalRevenue)}
-                        subtitle="Biểu đồ doanh thu theo ngày"
+                        total={loading ? "..." : formatCompactMoney(totalRevenue)}
+                        subtitle={
+                            shouldGroupByMonth
+                                ? "Biểu đồ doanh thu theo tháng"
+                                : "Biểu đồ doanh thu theo ngày"
+                        }
                         points={chartPoints.map((item) => ({
                             label: item.label,
                             value: item.revenue,

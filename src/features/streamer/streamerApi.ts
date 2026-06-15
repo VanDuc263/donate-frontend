@@ -148,4 +148,99 @@ export const getBio = () => {
     return axiosClient.get<StreamerBioResponse>("/api/streamers/me/bio");
 };
 
+export interface ProductPromotionResponse {
+    id: number;
+    createdAt: string | number[] | null;
+    title: string | null;
+    url: string | null;
+    imageUrl: string | null;
+}
+
+export interface ProductPromotionRequest {
+    id?: number;
+    title: string;
+    url: string;
+    imageUrl: string;
+}
+
+export const getMyProductPromotions = () => {
+    return axiosClient.get<ProductPromotionResponse[]>(
+        "/api/streamers/me/product-promotions"
+    );
+};
+
+export const saveMyProductPromotions = (
+    payload: ProductPromotionRequest[]
+) => {
+    return axiosClient.put<ProductPromotionResponse[]>(
+        "/api/streamers/me/product-promotions",
+        payload
+    );
+};
+
+export const uploadProductPromotionImage = (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    return axiosClient.post<string>(
+        "/api/streamers/me/product-promotions/upload",
+        formData,
+        {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        }
+    );
+};
+
+export interface StreamerStatisticPointResponse {
+    date: string;
+    donationCount: number;
+    revenue: number;
+}
+
+export interface StreamerStatisticsResponse {
+    startDate: string;
+    endDate: string;
+    totalDonations: number;
+    totalRevenue: number;
+    totalFollowers: number;
+    bestRevenueDate: string | null;
+    bestRevenueAmount: number;
+    dailyStats: StreamerStatisticPointResponse[];
+}
+
+export interface StreamerBlockResponse {
+    id: number;
+    userId: number;
+    username?: string | null;
+    fullName?: string | null;
+    avatar?: string | null;
+    createdAt?: string | number[] | null;
+}
+
+export const getMyStatistics = (startDate: string, endDate: string) => {
+    return axiosClient.get<StreamerStatisticsResponse>(
+        "/api/streamers/me/statistics",
+        {
+            params: {
+                startDate,
+                endDate,
+            },
+        }
+    );
+};
+
+export const getMyBlockedUsers = () => {
+    return axiosClient.get<StreamerBlockResponse[]>("/api/streamers/me/blocks");
+};
+
+export const blockUserByStreamer = (userId: number) => {
+    return axiosClient.post<StreamerBlockResponse>(`/api/streamers/me/blocks/${userId}`);
+};
+
+export const unblockUserByStreamer = (userId: number) => {
+    return axiosClient.delete(`/api/streamers/me/blocks/${userId}`);
+};
+
 

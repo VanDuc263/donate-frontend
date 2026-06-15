@@ -1,69 +1,102 @@
 import React, { ChangeEvent, useEffect, useState } from "react";
+import {
+    getMyProductPromotions,
+    ProductPromotionResponse,
+    saveMyProductPromotions,
+    uploadProductPromotionImage,
+} from "../../features/streamer/streamerApi";
 
 type PromotionItem = {
-    id: string;
+    clientId: string;
+    id?: number;
     imageUrl: string;
     title: string;
     link: string;
+    uploading: boolean;
 };
 
-const STORAGE_KEY = "streamer-product-promotions";
+const createClientId = () =>
+    `promotion-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 const createEmptyItem = (): PromotionItem => ({
-    id: `promotion-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    clientId: createClientId(),
     imageUrl: "",
     title: "",
     link: "",
+    uploading: false,
+});
+
+const mapResponseToItem = (item: ProductPromotionResponse): PromotionItem => ({
+    clientId: createClientId(),
+    id: item.id,
+    imageUrl: item.imageUrl || "",
+    title: item.title || "",
+    link: item.url || "",
+    uploading: false,
 });
 
 const ProductPromotionPage = () => {
     const [items, setItems] = useState<PromotionItem[]>([createEmptyItem()]);
-    const [savedMessage, setSavedMessage] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [statusMessage, setStatusMessage] = useState("");
+    const [statusType, setStatusType] = useState<"success" | "error">("success");
 
     useEffect(() => {
-        try {
-            const rawValue = localStorage.getItem(STORAGE_KEY);
-            if (!rawValue) return;
+        let ignore = false;
 
-            const parsedValue = JSON.parse(rawValue);
-            if (!Array.isArray(parsedValue) || parsedValue.length === 0) return;
+        const fetchPromotions = async () => {
+            try {
+                const res = await getMyProductPromotions();
+                if (ignore) {
+                    return;
+                }
 
-            setItems(
-                parsedValue.map((item: Partial<PromotionItem>, index: number) => ({
-                    id: item.id || `promotion-${index}`,
-                    imageUrl: item.imageUrl || "",
-                    title: item.title || "",
-                    link: item.link || "",
-                }))
-            );
-        } catch (error) {
-            console.error(error);
-        }
+                setItems(
+                    res.data.length > 0
+                        ? res.data.map(mapResponseToItem)
+                        : [createEmptyItem()]
+                );
+            } catch (error) {
+                console.error(error);
+                if (!ignore) {
+                    setStatusType("error");
+                    setStatusMessage("Không tải được danh sách quảng bá.");
+                }
+            } finally {
+                if (!ignore) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        fetchPromotions();
+
+        return () => {
+            ignore = true;
+        };
     }, []);
 
     useEffect(() => {
-        const timeoutId = window.setTimeout(() => {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-            setSavedMessage("Đã lưu thay đổi");
-        }, 250);
-
-        return () => window.clearTimeout(timeoutId);
-    }, [items]);
-
-    useEffect(() => {
-        if (!savedMessage) return;
+        if (!statusMessage) {
+            return;
+        }
 
         const timeoutId = window.setTimeout(() => {
-            setSavedMessage("");
-        }, 1500);
+            setStatusMessage("");
+        }, 2500);
 
         return () => window.clearTimeout(timeoutId);
-    }, [savedMessage]);
+    }, [statusMessage]);
 
-    const updateItem = (id: string, field: keyof PromotionItem, value: string) => {
+    const updateItem = (
+        clientId: string,
+        field: "title" | "link" | "imageUrl",
+        value: string
+    ) => {
         setItems((prev) =>
             prev.map((item) =>
-                item.id === id
+                item.clientId === clientId
                     ? {
                           ...item,
                           [field]: value,
@@ -73,95 +106,174 @@ const ProductPromotionPage = () => {
         );
     };
 
-    const handleImageChange = (id: string, event: ChangeEvent<HTMLInputElement>) => {
+    const setUploading = (clientId: string, uploading: boolean) => {
+        setItems((prev) =>
+            prev.map((item) =>
+                item.clientId === clientId
+                    ? {
+                          ...item,
+                          uploading,
+                      }
+                    : item
+            )
+        );
+    };
+
+    const handleImageChange = async (
+        clientId: string,
+        event: ChangeEvent<HTMLInputElement>
+    ) => {
         const file = event.target.files?.[0];
+        event.target.value = "";
+
         if (!file || !file.type.startsWith("image/")) {
-            event.target.value = "";
             return;
         }
 
-        const reader = new FileReader();
-        reader.onload = () => {
-            if (typeof reader.result === "string") {
-                updateItem(id, "imageUrl", reader.result);
-            }
-        };
-        reader.readAsDataURL(file);
-        event.target.value = "";
+        try {
+            setUploading(clientId, true);
+            const res = await uploadProductPromotionImage(file);
+            updateItem(clientId, "imageUrl", res.data);
+            setStatusType("success");
+            setStatusMessage("Tải ảnh lên thành công.");
+        } catch (error) {
+            console.error(error);
+            setStatusType("error");
+            setStatusMessage("Tải ảnh lên thất bại.");
+        } finally {
+            setUploading(clientId, false);
+        }
     };
 
     const handleAdd = () => {
         setItems((prev) => [...prev, createEmptyItem()]);
     };
 
-    const handleRemove = (id: string) => {
+    const handleRemove = (clientId: string) => {
         setItems((prev) => {
-            const nextItems = prev.filter((item) => item.id !== id);
+            const nextItems = prev.filter((item) => item.clientId !== clientId);
             return nextItems.length > 0 ? nextItems : [createEmptyItem()];
         });
     };
+
+    const handleSave = async () => {
+        try {
+            setSaving(true);
+            const payload = items.map((item) => ({
+                id: item.id,
+                title: item.title,
+                url: item.link,
+                imageUrl: item.imageUrl,
+            }));
+
+            const res = await saveMyProductPromotions(payload);
+            setItems(
+                res.data.length > 0
+                    ? res.data.map(mapResponseToItem)
+                    : [createEmptyItem()]
+            );
+            setStatusType("success");
+            setStatusMessage("Đã lưu thay đổi.");
+        } catch (error) {
+            console.error(error);
+            setStatusType("error");
+            setStatusMessage("Lưu danh sách quảng bá thất bại.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const isUploading = items.some((item) => item.uploading);
 
     return (
         <div className="profile-content">
             <div className="profile-card promo-card">
                 <div className="promo-header">
                     <div>
-                        <h2>Quảng cáo</h2>
-                        <p>Thêm các liên kết quảng cáo vào trang chủ của bạn</p>
+                        <h2>Quảng bá sản phẩm</h2>
+                        <p>Thêm ảnh, tiêu đề và liên kết quảng bá vào trang của bạn.</p>
                     </div>
 
-                    <button type="button" className="promo-add-btn" onClick={handleAdd}>
-                        + Thêm dịch vụ
-                    </button>
+                    <div className="promo-actions">
+                        <button type="button" className="promo-add-btn" onClick={handleAdd}>
+                            + Thêm mục
+                        </button>
+                        <button
+                            type="button"
+                            className="promo-save-btn"
+                            onClick={handleSave}
+                            disabled={saving || isUploading || loading}
+                        >
+                            {saving ? "Đang lưu..." : "Lưu thay đổi"}
+                        </button>
+                    </div>
                 </div>
 
-                {savedMessage && <div className="promo-saved-badge">{savedMessage}</div>}
+                {statusMessage && (
+                    <div
+                        className={`promo-saved-badge ${
+                            statusType === "error" ? "promo-saved-badge-error" : ""
+                        }`}
+                    >
+                        {statusMessage}
+                    </div>
+                )}
 
-                <div className="promo-list">
-                    {items.map((item) => (
-                        <div key={item.id} className="promo-row">
-                            <label className="promo-image-box">
-                                {item.imageUrl ? (
-                                    <img src={item.imageUrl} alt={item.title || "promotion"} />
-                                ) : (
-                                    <span>+</span>
-                                )}
+                {loading ? (
+                    <div className="promo-empty-state">Đang tải dữ liệu quảng bá...</div>
+                ) : (
+                    <div className="promo-list">
+                        {items.map((item) => (
+                            <div key={item.clientId} className="promo-row">
+                                <label className="promo-image-box">
+                                    {item.imageUrl ? (
+                                        <img
+                                            src={item.imageUrl}
+                                            alt={item.title || "product promotion"}
+                                        />
+                                    ) : (
+                                        <span>{item.uploading ? "..." : "+"}</span>
+                                    )}
+
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(event) =>
+                                            handleImageChange(item.clientId, event)
+                                        }
+                                        disabled={item.uploading}
+                                    />
+                                </label>
 
                                 <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(event) => handleImageChange(item.id, event)}
+                                    className="promo-input"
+                                    value={item.title}
+                                    onChange={(event) =>
+                                        updateItem(item.clientId, "title", event.target.value)
+                                    }
+                                    placeholder="iPhone 17"
                                 />
-                            </label>
 
-                            <input
-                                className="promo-input"
-                                value={item.title}
-                                onChange={(event) =>
-                                    updateItem(item.id, "title", event.target.value)
-                                }
-                                placeholder="iPhone 17"
-                            />
+                                <input
+                                    className="promo-input"
+                                    value={item.link}
+                                    onChange={(event) =>
+                                        updateItem(item.clientId, "link", event.target.value)
+                                    }
+                                    placeholder="https://zypage.com/shop/promotion"
+                                />
 
-                            <input
-                                className="promo-input"
-                                value={item.link}
-                                onChange={(event) =>
-                                    updateItem(item.id, "link", event.target.value)
-                                }
-                                placeholder="https://zypage.com/shop/promotion"
-                            />
-
-                            <button
-                                type="button"
-                                className="promo-delete-btn"
-                                onClick={() => handleRemove(item.id)}
-                            >
-                                Xóa
-                            </button>
-                        </div>
-                    ))}
-                </div>
+                                <button
+                                    type="button"
+                                    className="promo-delete-btn"
+                                    onClick={() => handleRemove(item.clientId)}
+                                >
+                                    Xóa
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );

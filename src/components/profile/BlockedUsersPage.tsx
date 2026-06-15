@@ -1,40 +1,63 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import {
+    getMyBlockedUsers,
+    StreamerBlockResponse,
+    unblockUserByStreamer,
+} from "../../features/streamer/streamerApi";
 
-type BlockedUserItem = {
-    id: number;
-    name: string;
-    username: string;
-    avatar?: string;
-};
-
-const blockedUsers: BlockedUserItem[] = [
-    {
-        id: 1,
-        name: "Nguyen Minh Khoa",
-        username: "minhkhoa99",
-        avatar: "https://i.pravatar.cc/120?img=12",
-    },
-    {
-        id: 2,
-        name: "Tran Bao Han",
-        username: "baohaan.live",
-        avatar: "https://i.pravatar.cc/120?img=32",
-    },
-    {
-        id: 3,
-        name: "Le Quoc Anh",
-        username: "quocanh.donate",
-        avatar: "https://i.pravatar.cc/120?img=15",
-    },
-    {
-        id: 4,
-        name: "Pham Gia Linh",
-        username: "gialinh.ne",
-        avatar: "https://i.pravatar.cc/120?img=47",
-    },
-];
+const displayNameOf = (user: StreamerBlockResponse) =>
+    user.fullName?.trim() || user.username?.trim() || "Người dùng";
 
 const BlockedUsersPage = () => {
+    const [blockedUsers, setBlockedUsers] = useState<StreamerBlockResponse[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [processingUserId, setProcessingUserId] = useState<number | null>(null);
+
+    useEffect(() => {
+        let ignore = false;
+
+        const fetchBlockedUsers = async () => {
+            try {
+                setLoading(true);
+                setError("");
+                const res = await getMyBlockedUsers();
+
+                if (!ignore) {
+                    setBlockedUsers(res.data || []);
+                }
+            } catch (err: any) {
+                if (!ignore) {
+                    setError(err?.response?.data?.message || "Không lấy được danh sách chặn.");
+                    setBlockedUsers([]);
+                }
+            } finally {
+                if (!ignore) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        fetchBlockedUsers();
+
+        return () => {
+            ignore = true;
+        };
+    }, []);
+
+    const handleUnblock = async (userId: number) => {
+        try {
+            setProcessingUserId(userId);
+            setError("");
+            await unblockUserByStreamer(userId);
+            setBlockedUsers((prev) => prev.filter((item) => item.userId !== userId));
+        } catch (err: any) {
+            setError(err?.response?.data?.message || "Bỏ chặn người dùng thất bại.");
+        } finally {
+            setProcessingUserId(null);
+        }
+    };
+
     return (
         <div className="profile-content">
             <div className="profile-card blocked-users-card">
@@ -42,13 +65,17 @@ const BlockedUsersPage = () => {
                     <h2>Danh sách chặn</h2>
                 </div>
 
+                {!!error && <div className="blocked-users-error">{error}</div>}
+
                 <div className="blocked-users-table">
                     <div className="blocked-users-table-head">
                         <span>Người dùng</span>
                         <span>Thao tác</span>
                     </div>
 
-                    {blockedUsers.length === 0 ? (
+                    {loading ? (
+                        <div className="blocked-users-empty">Đang tải danh sách chặn...</div>
+                    ) : blockedUsers.length === 0 ? (
                         <div className="blocked-users-empty">
                             Không có người dùng nào bị chặn
                         </div>
@@ -61,22 +88,28 @@ const BlockedUsersPage = () => {
                                             <img
                                                 className="blocked-users-avatar"
                                                 src={user.avatar}
-                                                alt={user.name}
+                                                alt={displayNameOf(user)}
                                             />
                                         ) : (
                                             <div className="blocked-users-avatar blocked-users-avatar--fallback">
-                                                {user.name.slice(0, 1).toUpperCase()}
+                                                {displayNameOf(user).slice(0, 1).toUpperCase()}
                                             </div>
                                         )}
 
                                         <div>
-                                            <strong>{user.name}</strong>
-                                            <span>@{user.username}</span>
+                                            <strong>{displayNameOf(user)}</strong>
+                                            <span>@{user.username || "unknown"}</span>
                                         </div>
                                     </div>
 
                                     <div className="blocked-users-actions">
-                                        <button type="button">Bỏ chặn</button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleUnblock(user.userId)}
+                                            disabled={processingUserId === user.userId}
+                                        >
+                                            {processingUserId === user.userId ? "Đang xử lý..." : "Bỏ chặn"}
+                                        </button>
                                     </div>
                                 </div>
                             ))}

@@ -225,6 +225,106 @@
     flex: 1;
 }
 
+.streamer-shop-panel {
+    margin-bottom: 18px;
+    overflow: hidden;
+    border-radius: 22px;
+    background: #182238;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    box-shadow: 0 18px 40px rgba(2, 6, 23, 0.24);
+    font-family: inherit;
+}
+
+.streamer-shop-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 28px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.streamer-shop-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.streamer-shop-icon {
+    color: #a855f7;
+}
+
+.streamer-shop-title {
+    color: #f8fafc;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+.streamer-shop-dots {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.streamer-shop-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.7);
+}
+
+.streamer-shop-dot.active {
+    background: #1d9bf0;
+}
+
+.streamer-promotion-list {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+    padding: 14px 20px 16px;
+}
+
+.streamer-promotion-card {
+    display: block;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #111b2f;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    font-family: inherit;
+}
+
+.streamer-promotion-card:hover {
+    transform: translateY(-2px);
+    background: #16233c;
+    box-shadow: 0 12px 26px rgba(2, 6, 23, 0.22);
+}
+
+.streamer-promotion-thumb {
+    aspect-ratio: 1 / 0.9;
+    background: #0f172a;
+}
+
+.streamer-promotion-thumb img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.streamer-promotion-title {
+    padding: 8px 8px 10px;
+    color: #f8fafc;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 /* ===== Donate banner ===== */
 .donate-banner {
     margin-bottom: 20px;
@@ -243,6 +343,7 @@
     border: none;
     padding: 10px 16px;
     border-radius: 8px;
+    font-family: inherit;
 }
 
 
@@ -408,6 +509,20 @@
 
     .donation-feed-header h3 {
         font-size: 21px;
+    }
+
+    .streamer-shop-header,
+    .streamer-promotion-list {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .streamer-promotion-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .streamer-shop-title {
+        font-size: 14px;
     }
 
 }

@@ -14,7 +14,6 @@ const Register = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirm, setConfirm] = useState("");
-    const [role, setRole] = useState<"viewer" | "streamer">("viewer");
     const [localError, setLocalError] = useState("");
 
     useEffect(() => {
@@ -62,21 +61,7 @@ const Register = () => {
                     </div>
                 ) : (
                     <>
-                        {/* Role selector */}
-                        <div className="role-selector">
-                            <button
-                                className={role === "viewer" ? "active" : ""}
-                                onClick={() => setRole("viewer")}
-                            >
-                                👁️ Người xem
-                            </button>
-                            <button
-                                className={role === "streamer" ? "active" : ""}
-                                onClick={() => setRole("streamer")}
-                            >
-                                🎮 Streamer
-                            </button>
-                        </div>
+
 
                         <input
                             type="text"
@@ -103,11 +88,6 @@ const Register = () => {
                             onChange={(e: ChangeEvent<HTMLInputElement>) => setConfirm(e.target.value)}
                         />
 
-                        {role === "streamer" && (
-                            <div className="streamer-notice">
-                                🎮 Bạn sẽ có thể tạo trang donate cá nhân sau khi đăng ký
-                            </div>
-                        )}
 
                         {(localError || error) && (
                             <p className="reg-error">❌ {localError || error}</p>

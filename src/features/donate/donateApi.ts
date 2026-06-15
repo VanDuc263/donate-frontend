@@ -14,6 +14,7 @@ export interface DonationHistoryItem {
     createdAt?: string | number[] | null;
     content?: string;
     referenceCode?: string;
+    blockedByStreamer?: boolean;
 }
 export interface donationPayload {
     streamerId: number;

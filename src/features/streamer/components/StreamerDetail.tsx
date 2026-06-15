@@ -4,6 +4,7 @@ import {
     mdiAlphaZCircle,
     mdiFacebook,
     mdiInstagram,
+    mdiStorefrontOutline,
     mdiYoutube,
 } from "@mdi/js";
 import Icon from "@mdi/react";
@@ -278,6 +279,10 @@ const StreamerDetail = () => {
         (item: any) => item?.visible && item?.url
     );
 
+    const visibleProductPromotions = (streamerDetail?.productPromotions || [])
+        .filter((item: any) => item?.imageUrl && item?.title)
+        .slice(0, 5);
+
 
 
     return (
@@ -382,6 +387,50 @@ const StreamerDetail = () => {
                     </div>
 
                     <div className="right">
+                        {visibleProductPromotions.length > 0 && (
+                            <div className="streamer-shop-panel">
+                                <div className="streamer-shop-header">
+                                    <div className="streamer-shop-title-wrap">
+                                        <Icon
+                                            path={mdiStorefrontOutline}
+                                            size={0.9}
+                                            className="streamer-shop-icon"
+                                        />
+                                        <span className="streamer-shop-title">SẢN PHẨM NỔI BẬT</span>
+                                    </div>
+
+                                    <div className="streamer-shop-dots" aria-hidden="true">
+                                        {visibleProductPromotions.slice(0, 4).map((_: any, index: number) => (
+                                            <span
+                                                key={index}
+                                                className={`streamer-shop-dot ${
+                                                    index === 0 ? "active" : ""
+                                                }`}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="streamer-promotion-list">
+                                    {visibleProductPromotions.map((item: any) => (
+                                        <a
+                                            key={item.id || `${item.title}-${item.imageUrl}`}
+                                            className="streamer-promotion-card"
+                                            href={item.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                        >
+                                            <div className="streamer-promotion-thumb">
+                                                <img src={item.imageUrl} alt={item.title} />
+                                            </div>
+                                            <div className="streamer-promotion-title">
+                                                {item.title}
+                                            </div>
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                         <div className="donate-banner">
                             <span>Bạn yêu thích streamer này?</span>
                             <button onClick={openDonate}>DONATE NGAY</button>
