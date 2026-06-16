@@ -2,15 +2,18 @@ const Footer = () => (
     <footer className="site-footer">
         <div className="footer-brand">
             <div className="footer-logo">ZyScan</div>
-            <p>Nền tảng hàng đầu cho cộng đồng game thủ và người sáng tạo nội dung.</p>
+            <p>
+                Nền tảng dành cho creator, streamer và cộng đồng muốn nhận donate
+                nhanh, rõ ràng và chuyên nghiệp hơn.
+            </p>
         </div>
 
         <div className="footer-columns">
             <div>
                 <h4>Sản phẩm</h4>
                 <a href="/">Tính năng</a>
-                <a href="/">Giá cả</a>
-                <a href="/">Cập nhật</a>
+                <a href="/">Trang donate</a>
+                <a href="/">Cập nhật mới</a>
             </div>
             <div>
                 <h4>Hỗ trợ</h4>
@@ -20,15 +23,16 @@ const Footer = () => (
             </div>
             <div>
                 <h4>Kết nối</h4>
+                <p className="footer-note">Theo dõi ZyScan để nhận thông tin và mẹo vận hành donate hiệu quả hơn.</p>
                 <div className="footer-socials">
-                    <span>f</span>
-                    <span>▶</span>
-                    <span>◌</span>
+                    <span>Fb</span>
+                    <span>Yt</span>
+                    <span>Tk</span>
                 </div>
             </div>
         </div>
 
-        <div className="footer-copy">© Copyright 2026 ZyScan. All rights reserved.</div>
+        <div className="footer-copy">© 2026 ZyScan. All rights reserved.</div>
     </footer>
 );
 

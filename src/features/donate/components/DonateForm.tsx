@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import "../../../styles/donate_form.css";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../app/store";
 import { getPaymentStatus, transactionSyncTest } from "../../../services/paymentApi";
 import QRWidget from "../../../components/QRWidget";
 import WalletModal from "../../../components/WalletModal";
-import {createPaymentBankQr, createPaymentQr, donateByWallet} from "../donateApi";
+import { createPaymentBankQr, createPaymentQr, donateByWallet } from "../donateApi";
 import { setWallet } from "../../wallet/walletSlice";
-import {subscribePayment} from "../../../services/socket";
+import { subscribePayment } from "../../../services/socket";
 
 type DonateModalProps = {
     onClose: () => void;
@@ -27,6 +27,39 @@ type PaymentInfo = {
     status: string;
 };
 
+type PaymentSuccessPopupProps = {
+    open: boolean;
+    amount?: number;
+    streamerName?: string;
+    onClose: () => void;
+};
+
+
+function PaymentSuccessPopup({
+    open,
+    amount,
+    streamerName,
+    onClose
+}: PaymentSuccessPopupProps) {
+    if (!open) return null;
+
+    return (
+        <div className="payment-success-overlay">
+            <div className="payment-success-popup" role="alertdialog" aria-modal="true">
+                <div className="payment-success-icon">✓</div>
+                <h3>Donate thành công</h3>
+                <p>
+                    {amount ? `${amount.toLocaleString("vi-VN")}d` : "Khoan donate"} đã được gửi
+                    {streamerName ? ` tới ${streamerName}` : ""}.
+                </p>
+                <button type="button" onClick={onClose}>
+                    Đóng
+                </button>
+            </div>
+        </div>
+    );
+}
+
 export default function DonateModal({ onClose }: DonateModalProps) {
     const [tab, setTab] = useState<TabType>("wallet");
 
@@ -43,13 +76,13 @@ export default function DonateModal({ onClose }: DonateModalProps) {
                         className={tab === "wallet" ? "active" : ""}
                         onClick={() => setTab("wallet")}
                     >
-                        Ví
+                        Vi
                     </button>
                     <button
                         className={tab === "bank" ? "active" : ""}
                         onClick={() => setTab("bank")}
                     >
-                        Ngân hàng
+                        Ngan hang
                     </button>
                     <button
                         className={tab === "qr" ? "active" : ""}
@@ -86,12 +119,12 @@ function WalletTab({ onClose }: { onClose: () => void }) {
             setError("");
 
             if (!streamer?.streamerId) {
-                setError("Không tìm thấy streamer.");
+                setError("Khong tim thay streamer.");
                 return;
             }
 
             if (!amount || amount <= 0) {
-                setError("Vui lòng nhập số tiền hợp lệ.");
+                setError("Vui long nhap so tien hop le.");
                 return;
             }
 
@@ -108,7 +141,7 @@ function WalletTab({ onClose }: { onClose: () => void }) {
             dispatch(setWallet(res?.data?.walletResponse));
             onClose();
         } catch (err: any) {
-            setError(err?.response?.data?.message || "Không tạo được lệnh thanh toán.");
+            setError(err?.response?.data?.message || "Khong tao duoc lenh thanh toan.");
         } finally {
             setLoading(false);
         }
@@ -117,21 +150,21 @@ function WalletTab({ onClose }: { onClose: () => void }) {
     return (
         <div>
             <div>
-                <p>Số dư</p>
+                <p>So du</p>
                 <h3>{wallet?.balance}</h3>
-                <button onClick={() => setWalletOpen(true)}>Nạp</button>
+                <button onClick={() => setWalletOpen(true)}>Nap</button>
             </div>
 
             <div>
                 <input
                     type="number"
-                    placeholder="Số tiền"
+                    placeholder="So tien"
                     value={amount || ""}
                     onChange={(e) => setAmount(Number(e.target.value))}
                 />
 
                 <input
-                    placeholder="Lời nhắn"
+                    placeholder="Loi nhan"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                 />
@@ -139,7 +172,7 @@ function WalletTab({ onClose }: { onClose: () => void }) {
                 {error && <p style={{ color: "red" }}>{error}</p>}
 
                 <button onClick={handleCreateDonationByWallet} disabled={loading}>
-                    {loading ? "Đang tạo..." : "Tạo donate"}
+                    {loading ? "Dang tao..." : "Tao donate"}
                 </button>
             </div>
 
@@ -157,31 +190,56 @@ function BankTab({ onClose }: { onClose: () => void }) {
     const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
     const [paymentStatus, setPaymentStatus] = useState<string>("");
     const [error, setError] = useState("");
+    const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+    const closeTimerRef = useRef<number | null>(null);
+
+    const clearCloseTimer = () => {
+        if (closeTimerRef.current) {
+            window.clearTimeout(closeTimerRef.current);
+            closeTimerRef.current = null;
+        }
+    };
+
+
+    const handlePaymentSuccess = useCallback((status?: string) => {
+        setPaymentStatus(status || "SUCCESS");
+        setShowSuccessPopup(true);
+        clearCloseTimer();
+        closeTimerRef.current = window.setTimeout(() => {
+            setShowSuccessPopup(false);
+            onClose();
+        }, 2200);
+    }, [onClose]);
+
+    useEffect(() => {
+        return () => {
+            clearCloseTimer();
+        };
+    }, []);
+
     useEffect(() => {
         if (!paymentInfo?.donationId) return;
 
         const unsubscribe = subscribePayment(paymentInfo.donationId, (data) => {
-            setPaymentStatus(data.status || "SUCCESS");
-            alert("Thanh toán thành công!");
-            onClose();
+            handlePaymentSuccess(data.status);
         });
 
         return () => {
             unsubscribe();
         };
-    }, [paymentInfo?.donationId, onClose]);
+    }, [handlePaymentSuccess, paymentInfo?.donationId]);
 
     const handleCreatePayment = async () => {
         try {
             setError("");
 
             if (!streamer?.streamerId) {
-                setError("Không tìm thấy streamer.");
+                setError("Khong tim thay streamer.");
                 return;
             }
 
             if (!amount || amount <= 0) {
-                setError("Vui lòng nhập số tiền hợp lệ.");
+                setError("Vui long nhap so tien hop le.");
                 return;
             }
 
@@ -198,8 +256,8 @@ function BankTab({ onClose }: { onClose: () => void }) {
             setPaymentInfo(res.data);
             setPaymentStatus(res.data.status);
         } catch (err: any) {
-            console.error("Lỗi tạo payment:", err);
-            setError(err?.response?.data?.message || "Không tạo được lệnh thanh toán.");
+            console.error("Loi tao payment:", err);
+            setError(err?.response?.data?.message || "Khong tao duoc lenh thanh toan.");
         } finally {
             setLoading(false);
         }
@@ -207,7 +265,7 @@ function BankTab({ onClose }: { onClose: () => void }) {
 
     const handleSandboxPay = async () => {
         if (!paymentInfo) {
-            setError("Không tìm thấy thông tin thanh toán.");
+            setError("Khong tim thay thong tin thanh toan.");
             return;
         }
 
@@ -224,70 +282,82 @@ function BankTab({ onClose }: { onClose: () => void }) {
             setPaymentStatus(res.data.status);
 
             if (res.data.status === "PAID" && res.data.donationCreated) {
-                alert("Thanh toán thành công!");
-                onClose();
+                handlePaymentSuccess(res.data.status);
                 return;
             }
 
-            setError("Đã gọi test thanh toán nhưng trạng thái chưa đổi.");
+            setError("Da goi test thanh toan nhung trang thai chua doi.");
         } catch (err: any) {
-            console.error("Lỗi test thanh toán:", err);
-            setError(err?.response?.data?.message || "Không thể giả lập thanh toán.");
+            console.error("Loi test thanh toan:", err);
+            setError(err?.response?.data?.message || "Khong the gia lap thanh toan.");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div>
-            {!streamer?.qrUrl ? (
-                <div>
-                    <p>Streamer chưa cấu hình tài khoản ngân hàng để tạo QR code.</p>
-                </div>
-            ) : !paymentInfo ? (
-                <div>
-                    <input
-                        type="number"
-                        placeholder="Số tiền"
-                        value={amount || ""}
-                        onChange={(e) => setAmount(Number(e.target.value))}
-                    />
-
-                    <input
-                        placeholder="Lời nhắn"
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                    />
-
-                    {error && <p style={{ color: "red" }}>{error}</p>}
-
-                    <button onClick={handleCreatePayment} disabled={loading}>
-                        {loading ? "Đang tạo..." : "Tạo thanh toán ngân hàng"}
-                    </button>
-                </div>
-            ) : (
-                <div>
-                    {paymentInfo.qrUrl && streamer?.token ? (
-                        <QRWidget qrUrl={paymentInfo.qrUrl} token={streamer.token} />
-                    ) : (
-                        <div>
-                            <p>Chưa có ảnh QR thật. Dùng thông tin dưới để test.</p>
-                        </div>
-                    )}
-
+        <>
+            <div>
+                {!streamer?.qrUrl ? (
                     <div>
-                        {paymentStatus && <p>Trạng thái: {paymentStatus}</p>}
-                        {error && <p style={{ color: "red", marginTop: 10 }}>{error}</p>}
+                        <p>Streamer chua cau hinh tai khoan ngan hang de tao QR code.</p>
+                    </div>
+                ) : !paymentInfo ? (
+                    <div>
+                        <input
+                            type="number"
+                            placeholder="So tien"
+                            value={amount || ""}
+                            onChange={(e) => setAmount(Number(e.target.value))}
+                        />
 
-                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-                            <button onClick={handleSandboxPay} disabled={loading}>
-                                {loading ? "Đang xử lý..." : "Test thanh toán"}
-                            </button>
+                        <input
+                            placeholder="Loi nhan"
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                        />
+
+                        {error && <p style={{ color: "red" }}>{error}</p>}
+
+                        <button onClick={handleCreatePayment} disabled={loading}>
+                            {loading ? "Dang tao..." : "Tao thanh toan ngan hang"}
+                        </button>
+                    </div>
+                ) : (
+                    <div>
+                        {paymentInfo.qrUrl && streamer?.token ? (
+                            <QRWidget qrUrl={paymentInfo.qrUrl} token={streamer.token} />
+                        ) : (
+                            <div>
+                                <p>Chua co anh QR that. Dung thong tin duoi de test.</p>
+                            </div>
+                        )}
+
+                        <div>
+                            {paymentStatus && <p>Trang thai: {paymentStatus}</p>}
+                            {error && <p style={{ color: "red", marginTop: 10 }}>{error}</p>}
+
+                            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+                                <button onClick={handleSandboxPay} disabled={loading}>
+                                    {loading ? "Dang xu ly..." : "Test thanh toan"}
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )}
+            </div>
+
+            <PaymentSuccessPopup
+                open={showSuccessPopup}
+                amount={paymentInfo?.amount}
+                streamerName={streamer?.displayName}
+                onClose={() => {
+                    clearCloseTimer();
+                    setShowSuccessPopup(false);
+                    onClose();
+                }}
+            />
+        </>
     );
 }
 
@@ -300,34 +370,52 @@ function QrDonateTab({ onClose }: { onClose: () => void }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [paymentStatus, setPaymentStatus] = useState("");
+    const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+    const closeTimerRef = useRef<number | null>(null);
 
-        console.log(paymentInfo?.donationId)
+    const clearCloseTimer = () => {
+        if (closeTimerRef.current) {
+            window.clearTimeout(closeTimerRef.current);
+            closeTimerRef.current = null;
+        }
+    };
+
+    const handlePaymentSuccess = useCallback((status?: string) => {
+        setPaymentStatus(status || "SUCCESS");
+        setShowSuccessPopup(true);
+        clearCloseTimer();
+
+    }, [onClose]);
+
+    useEffect(() => {
+        return () => {
+            clearCloseTimer();
+        };
+    }, []);
+
     useEffect(() => {
         if (!paymentInfo?.donationId) return;
 
-
         const unsubscribe = subscribePayment(paymentInfo.donationId, (data) => {
-            setPaymentStatus(data.status || "SUCCESS");
-            alert("Thanh toán thành công!");
-            onClose();
+            handlePaymentSuccess(data.status);
         });
 
         return () => {
             unsubscribe();
         };
-    }, [paymentInfo?.donationId, onClose]);
+    }, [handlePaymentSuccess, paymentInfo?.donationId]);
 
     const handleCreateQrDonate = async () => {
         try {
             setError("");
 
             if (!streamer?.streamerId) {
-                setError("Không tìm thấy streamer.");
+                setError("Khong tim thay streamer.");
                 return;
             }
 
             if (!amount || amount <= 0) {
-                setError("Vui lòng nhập số tiền hợp lệ.");
+                setError("Vui long nhap so tien hop le.");
                 return;
             }
 
@@ -336,20 +424,17 @@ function QrDonateTab({ onClose }: { onClose: () => void }) {
             const res = await createPaymentQr({
                 streamerId: streamer.streamerId,
                 donorId: user?.userId ?? null,
-                donorName: user?.fullName || user?.username || "Anonymous",
+                donorName: user?.fullName || user?.username || "An danh",
                 amount: Number(amount),
                 message,
-                methodId : 1
+                methodId: 1
             });
-
-            console.log("QRTab")
-            console.log(res)
 
             setPaymentInfo(res.data);
             setPaymentStatus(res.data.status);
         } catch (err: any) {
-            console.error("Lỗi tạo QR donate:", err);
-            setError(err?.response?.data?.message || "Không tạo được mã QR donate.");
+            console.error("Loi tao QR donate:", err);
+            setError(err?.response?.data?.message || "Khong tao duoc ma QR donate.");
         } finally {
             setLoading(false);
         }
@@ -357,7 +442,7 @@ function QrDonateTab({ onClose }: { onClose: () => void }) {
 
     const handleSandboxPay = async () => {
         if (!paymentInfo) {
-            setError("Không tìm thấy thông tin thanh toán.");
+            setError("Khong tim thay thong tin thanh toan.");
             return;
         }
 
@@ -374,85 +459,97 @@ function QrDonateTab({ onClose }: { onClose: () => void }) {
             setPaymentStatus(res.data.status);
 
             if (res.data.status === "PAID" && res.data.donationCreated) {
-                alert("Thanh toán thành công!");
-                onClose();
+                handlePaymentSuccess(res.data.status);
                 return;
             }
 
-            setError("Đã gọi test thanh toán nhưng trạng thái chưa đổi.");
+            setError("Da goi test thanh toan nhung trang thai chua doi.");
         } catch (err: any) {
-            console.error("Lỗi test thanh toán:", err);
-            setError(err?.response?.data?.message || "Không thể giả lập thanh toán.");
+            console.error("Loi test thanh toan:", err);
+            setError(err?.response?.data?.message || "Khong the gia lap thanh toan.");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="qr-donate-simple">
-            {!paymentInfo ? (
-                <div className="qr-donate-simple-form">
-                    <p className="qr-donate-simple-note">
-                        Donate qua QR sẽ chuyển trực tiếp tới ví của tài khoản {" "}
-                        <strong>{streamer?.displayName || "streamer"}</strong>.
-                    </p>
+        <>
+            <div className="qr-donate-simple">
+                {!paymentInfo ? (
+                    <div className="qr-donate-simple-form">
+                        <p className="qr-donate-simple-note">
+                            Donate qua QR se chuyen truc tiep toi vi cua tai khoan{" "}
+                            <strong>{streamer?.displayName || "streamer"}</strong>.
+                        </p>
 
-                    <input
-                        type="number"
-                        placeholder="Số tiền"
-                        value={amount || ""}
-                        onChange={(e) => setAmount(Number(e.target.value))}
-                    />
+                        <input
+                            type="number"
+                            placeholder="So tien"
+                            value={amount || ""}
+                            onChange={(e) => setAmount(Number(e.target.value))}
+                        />
 
-                    <input
-                        placeholder="Lời nhắn"
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                    />
+                        <input
+                            placeholder="Loi nhan"
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                        />
 
-                    {error && <p style={{ color: "red" }}>{error}</p>}
+                        {error && <p style={{ color: "red" }}>{error}</p>}
 
-                    <button onClick={handleCreateQrDonate} disabled={loading}>
-                        {loading ? "Đang tạo..." : "Tạo QR donate"}
-                    </button>
-                </div>
-            ) : (
-                <div className="qr-donate-simple-result">
-                    {paymentInfo.qrUrl && streamer?.token ? (
-                        <QRWidget qrUrl={paymentInfo.qrUrl} token={streamer.token} />
-                    ) : (
-                        <div>
-                            <p>Chưa có ảnh QR thật. Dùng thông tin dưới để test.</p>
+                        <button onClick={handleCreateQrDonate} disabled={loading}>
+                            {loading ? "Dang tao..." : "Tao QR donate"}
+                        </button>
+                    </div>
+                ) : (
+                    <div className="qr-donate-simple-result">
+                        {paymentInfo.qrUrl && streamer?.token ? (
+                            <QRWidget qrUrl={paymentInfo.qrUrl} token={streamer.token} />
+                        ) : (
+                            <div>
+                                <p>Chua co anh QR that. Dung thong tin duoi de test.</p>
+                            </div>
+                        )}
+
+                        <div className="qr-donate-simple-meta">
+                            <p>Streamer nhan: {streamer?.displayName || "Streamer"}</p>
+                            <p>So tien: {paymentInfo.amount?.toLocaleString("vi-VN")}d</p>
+                            <p>Trang thai: {paymentStatus || paymentInfo.status}</p>
+                            {paymentInfo.addInfo && <p>Noi dung: {paymentInfo.addInfo}</p>}
                         </div>
-                    )}
 
-                    <div className="qr-donate-simple-meta">
-                        <p>Streamer nhận: {streamer?.displayName || "Streamer"}</p>
-                        <p>Số tiền: {paymentInfo.amount?.toLocaleString("vi-VN")}đ</p>
-                        <p>Trạng thái: {paymentStatus || paymentInfo.status}</p>
-                        {paymentInfo.addInfo && <p>Nội dung: {paymentInfo.addInfo}</p>}
+                        {error && <p style={{ color: "red", marginTop: 10 }}>{error}</p>}
+
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+                            <button onClick={handleSandboxPay} disabled={loading}>
+                                {loading ? "Dang xu ly..." : "Test thanh toan"}
+                            </button>
+                            <button
+                                type="button"
+                                className="qr-donate-reset-btn"
+                                onClick={() => {
+                                    setPaymentInfo(null);
+                                    setPaymentStatus("");
+                                    setError("");
+                                }}
+                            >
+                                Tao lai
+                            </button>
+                        </div>
                     </div>
+                )}
+            </div>
 
-                    {error && <p style={{ color: "red", marginTop: 10 }}>{error}</p>}
-
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-                        <button onClick={handleSandboxPay} disabled={loading}>
-                            {loading ? "Đang xử lý..." : "Test thanh toán"}
-                        </button>
-                        <button
-                            type="button"
-                            className="qr-donate-reset-btn"
-                            onClick={() => {
-                                setPaymentInfo(null);
-                                setPaymentStatus("");
-                                setError("");
-                            }}
-                        >
-                            Tạo lại
-                        </button>
-                    </div>
-                </div>
-            )}
-        </div>
+            <PaymentSuccessPopup
+                open={showSuccessPopup}
+                amount={paymentInfo?.amount}
+                streamerName={streamer?.displayName}
+                onClose={() => {
+                    clearCloseTimer();
+                    setShowSuccessPopup(false);
+                    onClose();
+                }}
+            />
+        </>
     );
 }
