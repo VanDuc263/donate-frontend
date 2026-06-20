@@ -34,12 +34,11 @@ type PaymentSuccessPopupProps = {
     onClose: () => void;
 };
 
-
 function PaymentSuccessPopup({
     open,
     amount,
     streamerName,
-    onClose
+    onClose,
 }: PaymentSuccessPopupProps) {
     if (!open) return null;
 
@@ -49,7 +48,7 @@ function PaymentSuccessPopup({
                 <div className="payment-success-icon">✓</div>
                 <h3>Donate thành công</h3>
                 <p>
-                    {amount ? `${amount.toLocaleString("vi-VN")}d` : "Khoan donate"} đã được gửi
+                    {amount ? `${amount.toLocaleString("vi-VN")}đ` : "Khoản donate"} đã được gửi
                     {streamerName ? ` tới ${streamerName}` : ""}.
                 </p>
                 <button type="button" onClick={onClose}>
@@ -76,13 +75,13 @@ export default function DonateModal({ onClose }: DonateModalProps) {
                         className={tab === "wallet" ? "active" : ""}
                         onClick={() => setTab("wallet")}
                     >
-                        Vi
+                        Ví
                     </button>
                     <button
                         className={tab === "bank" ? "active" : ""}
                         onClick={() => setTab("bank")}
                     >
-                        Ngan hang
+                        Ngân hàng
                     </button>
                     <button
                         className={tab === "qr" ? "active" : ""}
@@ -119,12 +118,12 @@ function WalletTab({ onClose }: { onClose: () => void }) {
             setError("");
 
             if (!streamer?.streamerId) {
-                setError("Khong tim thay streamer.");
+                setError("Không tìm thấy streamer.");
                 return;
             }
 
             if (!amount || amount <= 0) {
-                setError("Vui long nhap so tien hop le.");
+                setError("Vui lòng nhập số tiền hợp lệ.");
                 return;
             }
 
@@ -135,36 +134,44 @@ function WalletTab({ onClose }: { onClose: () => void }) {
                 donorId: user?.userId ?? null,
                 donorName: user?.fullName || user?.username || "Anonymous",
                 amount: Number(amount),
-                message
+                message,
             });
 
             dispatch(setWallet(res?.data?.walletResponse));
             onClose();
         } catch (err: any) {
-            setError(err?.response?.data?.message || "Khong tao duoc lenh thanh toan.");
+            setError(err?.response?.data?.message || "Không tạo được lệnh thanh toán.");
         } finally {
             setLoading(false);
         }
     };
 
+    if (!user) {
+        return (
+            <div className="donate-empty-state">
+                <p>Bạn cần đăng nhập để donate qua ví.</p>
+            </div>
+        );
+    }
+
     return (
         <div>
             <div>
-                <p>So du</p>
+                <p>Số dư</p>
                 <h3>{wallet?.balance}</h3>
-                <button onClick={() => setWalletOpen(true)}>Nap</button>
+                <button onClick={() => setWalletOpen(true)}>Nạp</button>
             </div>
 
             <div>
                 <input
                     type="number"
-                    placeholder="So tien"
+                    placeholder="Số tiền"
                     value={amount || ""}
                     onChange={(e) => setAmount(Number(e.target.value))}
                 />
 
                 <input
-                    placeholder="Loi nhan"
+                    placeholder="Lời nhắn"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                 />
@@ -172,7 +179,7 @@ function WalletTab({ onClose }: { onClose: () => void }) {
                 {error && <p style={{ color: "red" }}>{error}</p>}
 
                 <button onClick={handleCreateDonationByWallet} disabled={loading}>
-                    {loading ? "Dang tao..." : "Tao donate"}
+                    {loading ? "Đang tạo..." : "Tạo donate"}
                 </button>
             </div>
 
@@ -199,7 +206,6 @@ function BankTab({ onClose }: { onClose: () => void }) {
             closeTimerRef.current = null;
         }
     };
-
 
     const handlePaymentSuccess = useCallback((status?: string) => {
         setPaymentStatus(status || "SUCCESS");
@@ -234,12 +240,12 @@ function BankTab({ onClose }: { onClose: () => void }) {
             setError("");
 
             if (!streamer?.streamerId) {
-                setError("Khong tim thay streamer.");
+                setError("Không tìm thấy streamer.");
                 return;
             }
 
             if (!amount || amount <= 0) {
-                setError("Vui long nhap so tien hop le.");
+                setError("Vui lòng nhập số tiền hợp lệ.");
                 return;
             }
 
@@ -250,14 +256,14 @@ function BankTab({ onClose }: { onClose: () => void }) {
                 donorId: user?.userId ?? null,
                 donorName: user?.fullName || user?.username || "Anonymous",
                 amount: Number(amount),
-                message
+                message,
             });
 
             setPaymentInfo(res.data);
             setPaymentStatus(res.data.status);
         } catch (err: any) {
-            console.error("Loi tao payment:", err);
-            setError(err?.response?.data?.message || "Khong tao duoc lenh thanh toan.");
+            console.error("Lỗi tạo payment:", err);
+            setError(err?.response?.data?.message || "Không tạo được lệnh thanh toán.");
         } finally {
             setLoading(false);
         }
@@ -265,7 +271,7 @@ function BankTab({ onClose }: { onClose: () => void }) {
 
     const handleSandboxPay = async () => {
         if (!paymentInfo) {
-            setError("Khong tim thay thong tin thanh toan.");
+            setError("Không tìm thấy thông tin thanh toán.");
             return;
         }
 
@@ -275,7 +281,7 @@ function BankTab({ onClose }: { onClose: () => void }) {
 
             await transactionSyncTest({
                 content: paymentInfo.addInfo,
-                amount: paymentInfo.amount
+                amount: paymentInfo.amount,
             });
 
             const res = await getPaymentStatus(paymentInfo.orderCode);
@@ -286,10 +292,10 @@ function BankTab({ onClose }: { onClose: () => void }) {
                 return;
             }
 
-            setError("Da goi test thanh toan nhung trang thai chua doi.");
+            setError("Đã gọi test thanh toán nhưng trạng thái chưa đổi.");
         } catch (err: any) {
-            console.error("Loi test thanh toan:", err);
-            setError(err?.response?.data?.message || "Khong the gia lap thanh toan.");
+            console.error("Lỗi test thanh toán:", err);
+            setError(err?.response?.data?.message || "Không thể giả lập thanh toán.");
         } finally {
             setLoading(false);
         }
@@ -299,20 +305,20 @@ function BankTab({ onClose }: { onClose: () => void }) {
         <>
             <div>
                 {!streamer?.qrUrl ? (
-                    <div>
-                        <p>Streamer chua cau hinh tai khoan ngan hang de tao QR code.</p>
+                    <div className="donate-empty-state">
+                        <p>Streamer chưa cấu hình tài khoản ngân hàng để tạo mã QR.</p>
                     </div>
                 ) : !paymentInfo ? (
                     <div>
                         <input
                             type="number"
-                            placeholder="So tien"
+                            placeholder="Số tiền"
                             value={amount || ""}
                             onChange={(e) => setAmount(Number(e.target.value))}
                         />
 
                         <input
-                            placeholder="Loi nhan"
+                            placeholder="Lời nhắn"
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
                         />
@@ -320,7 +326,7 @@ function BankTab({ onClose }: { onClose: () => void }) {
                         {error && <p style={{ color: "red" }}>{error}</p>}
 
                         <button onClick={handleCreatePayment} disabled={loading}>
-                            {loading ? "Dang tao..." : "Tao thanh toan ngan hang"}
+                            {loading ? "Đang tạo..." : "Tạo thanh toán ngân hàng"}
                         </button>
                     </div>
                 ) : (
@@ -328,18 +334,18 @@ function BankTab({ onClose }: { onClose: () => void }) {
                         {paymentInfo.qrUrl && streamer?.token ? (
                             <QRWidget qrUrl={paymentInfo.qrUrl} token={streamer.token} />
                         ) : (
-                            <div>
-                                <p>Chua co anh QR that. Dung thong tin duoi de test.</p>
+                            <div className="donate-empty-state">
+                                <p>Chưa có ảnh QR thật. Dùng thông tin bên dưới để test.</p>
                             </div>
                         )}
 
                         <div>
-                            {paymentStatus && <p>Trang thai: {paymentStatus}</p>}
+                            {paymentStatus && <p>Trạng thái: {paymentStatus}</p>}
                             {error && <p style={{ color: "red", marginTop: 10 }}>{error}</p>}
 
                             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
                                 <button onClick={handleSandboxPay} disabled={loading}>
-                                    {loading ? "Dang xu ly..." : "Test thanh toan"}
+                                    {loading ? "Đang xử lý..." : "Test thanh toán"}
                                 </button>
                             </div>
                         </div>
@@ -384,8 +390,7 @@ function QrDonateTab({ onClose }: { onClose: () => void }) {
         setPaymentStatus(status || "SUCCESS");
         setShowSuccessPopup(true);
         clearCloseTimer();
-
-    }, [onClose]);
+    }, []);
 
     useEffect(() => {
         return () => {
@@ -410,12 +415,12 @@ function QrDonateTab({ onClose }: { onClose: () => void }) {
             setError("");
 
             if (!streamer?.streamerId) {
-                setError("Khong tim thay streamer.");
+                setError("Không tìm thấy streamer.");
                 return;
             }
 
             if (!amount || amount <= 0) {
-                setError("Vui long nhap so tien hop le.");
+                setError("Vui lòng nhập số tiền hợp lệ.");
                 return;
             }
 
@@ -424,17 +429,17 @@ function QrDonateTab({ onClose }: { onClose: () => void }) {
             const res = await createPaymentQr({
                 streamerId: streamer.streamerId,
                 donorId: user?.userId ?? null,
-                donorName: user?.fullName || user?.username || "An danh",
+                donorName: user?.fullName || user?.username || "Ẩn danh",
                 amount: Number(amount),
                 message,
-                methodId: 1
+                methodId: 1,
             });
 
             setPaymentInfo(res.data);
             setPaymentStatus(res.data.status);
         } catch (err: any) {
-            console.error("Loi tao QR donate:", err);
-            setError(err?.response?.data?.message || "Khong tao duoc ma QR donate.");
+            console.error("Lỗi tạo QR donate:", err);
+            setError(err?.response?.data?.message || "Không tạo được mã QR donate.");
         } finally {
             setLoading(false);
         }
@@ -442,7 +447,7 @@ function QrDonateTab({ onClose }: { onClose: () => void }) {
 
     const handleSandboxPay = async () => {
         if (!paymentInfo) {
-            setError("Khong tim thay thong tin thanh toan.");
+            setError("Không tìm thấy thông tin thanh toán.");
             return;
         }
 
@@ -452,7 +457,7 @@ function QrDonateTab({ onClose }: { onClose: () => void }) {
 
             await transactionSyncTest({
                 content: paymentInfo.addInfo,
-                amount: paymentInfo.amount
+                amount: paymentInfo.amount,
             });
 
             const res = await getPaymentStatus(paymentInfo.orderCode);
@@ -463,10 +468,10 @@ function QrDonateTab({ onClose }: { onClose: () => void }) {
                 return;
             }
 
-            setError("Da goi test thanh toan nhung trang thai chua doi.");
+            setError("Đã gọi test thanh toán nhưng trạng thái chưa đổi.");
         } catch (err: any) {
-            console.error("Loi test thanh toan:", err);
-            setError(err?.response?.data?.message || "Khong the gia lap thanh toan.");
+            console.error("Lỗi test thanh toán:", err);
+            setError(err?.response?.data?.message || "Không thể giả lập thanh toán.");
         } finally {
             setLoading(false);
         }
@@ -478,19 +483,19 @@ function QrDonateTab({ onClose }: { onClose: () => void }) {
                 {!paymentInfo ? (
                     <div className="qr-donate-simple-form">
                         <p className="qr-donate-simple-note">
-                            Donate qua QR se chuyen truc tiep toi vi cua tai khoan{" "}
+                            Donate qua QR sẽ chuyển trực tiếp tới ví của tài khoản{" "}
                             <strong>{streamer?.displayName || "streamer"}</strong>.
                         </p>
 
                         <input
                             type="number"
-                            placeholder="So tien"
+                            placeholder="Số tiền"
                             value={amount || ""}
                             onChange={(e) => setAmount(Number(e.target.value))}
                         />
 
                         <input
-                            placeholder="Loi nhan"
+                            placeholder="Lời nhắn"
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
                         />
@@ -498,7 +503,7 @@ function QrDonateTab({ onClose }: { onClose: () => void }) {
                         {error && <p style={{ color: "red" }}>{error}</p>}
 
                         <button onClick={handleCreateQrDonate} disabled={loading}>
-                            {loading ? "Dang tao..." : "Tao QR donate"}
+                            {loading ? "Đang tạo..." : "Tạo QR donate"}
                         </button>
                     </div>
                 ) : (
@@ -506,23 +511,23 @@ function QrDonateTab({ onClose }: { onClose: () => void }) {
                         {paymentInfo.qrUrl && streamer?.token ? (
                             <QRWidget qrUrl={paymentInfo.qrUrl} token={streamer.token} />
                         ) : (
-                            <div>
-                                <p>Chua co anh QR that. Dung thong tin duoi de test.</p>
+                            <div className="donate-empty-state">
+                                <p>Chưa có ảnh QR thật. Dùng thông tin bên dưới để test.</p>
                             </div>
                         )}
 
                         <div className="qr-donate-simple-meta">
-                            <p>Streamer nhan: {streamer?.displayName || "Streamer"}</p>
-                            <p>So tien: {paymentInfo.amount?.toLocaleString("vi-VN")}d</p>
-                            <p>Trang thai: {paymentStatus || paymentInfo.status}</p>
-                            {paymentInfo.addInfo && <p>Noi dung: {paymentInfo.addInfo}</p>}
+                            <p>Streamer nhận: {streamer?.displayName || "Streamer"}</p>
+                            <p>Số tiền: {paymentInfo.amount?.toLocaleString("vi-VN")}đ</p>
+                            <p>Trạng thái: {paymentStatus || paymentInfo.status}</p>
+                            {paymentInfo.addInfo && <p>Nội dung: {paymentInfo.addInfo}</p>}
                         </div>
 
                         {error && <p style={{ color: "red", marginTop: 10 }}>{error}</p>}
 
                         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
                             <button onClick={handleSandboxPay} disabled={loading}>
-                                {loading ? "Dang xu ly..." : "Test thanh toan"}
+                                {loading ? "Đang xử lý..." : "Test thanh toán"}
                             </button>
                             <button
                                 type="button"
@@ -533,7 +538,7 @@ function QrDonateTab({ onClose }: { onClose: () => void }) {
                                     setError("");
                                 }}
                             >
-                                Tao lai
+                                Tạo lại
                             </button>
                         </div>
                     </div>

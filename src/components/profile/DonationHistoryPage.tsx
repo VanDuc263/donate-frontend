@@ -181,8 +181,7 @@ const DonationHistoryPage = () => {
             <div className="profile-card donation-history-card">
                 <div className="donation-history-head">
                     <div>
-                        <h2>{title}</h2>
-                        <p>{description}</p>
+                        <h2 style={{marginBottom : 20}}>{title}</h2>
 
                         <div className="donation-history-tabs">
                             <button

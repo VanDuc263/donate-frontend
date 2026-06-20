@@ -180,13 +180,7 @@ const PaymentSettings = () => {
                     </div>
                 </div>
 
-                <div className="payment-guide">
-                    <div className="payment-guide-text">
-                        <h3>Hướng dẫn kết nối thanh toán tự động</h3>
-                        <p>Bước 1: Thêm thông tin tài khoản ngân hàng để nhận tiền.</p>
-                        <p>Bước 2: Hệ thống hiện chỉ hỗ trợ cấu hình QR Code ngân hàng qua SePay.</p>
-                    </div>
-                </div>
+
 
                 <div className="payment-section-title">Các phương thức thanh toán</div>
                 <div className="payment-grid">

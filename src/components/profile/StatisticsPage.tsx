@@ -219,10 +219,7 @@ const StatisticsPage = () => {
                 <div className="statistics-head">
                     <div>
                         <h2>Thống kê</h2>
-                        <p>
-                            Theo dõi lượt donate, doanh thu và follower của trang donate
-                            trong khoảng thời gian bạn chọn.
-                        </p>
+
                     </div>
                 </div>
 
@@ -274,19 +271,16 @@ const StatisticsPage = () => {
                     <div className="statistics-stat-box">
                         <span>Lượt donate</span>
                         <strong>{loading ? "..." : totalDonations}</strong>
-                        <p>Tổng số lượt donate thành công trong khoảng thời gian đang xem.</p>
                     </div>
 
                     <div className="statistics-stat-box">
                         <span>Doanh thu</span>
                         <strong>{loading ? "..." : formatCompactMoney(totalRevenue)}</strong>
-                        <p>Tổng số tiền nhận được từ các lượt donate thành công.</p>
                     </div>
 
                     <div className="statistics-stat-box">
                         <span>Follower hiện tại</span>
                         <strong>{loading ? "..." : totalFollowers}</strong>
-                        <p>Số lượng người theo dõi hiện có của trang donate.</p>
                     </div>
                 </div>
 
@@ -297,8 +291,8 @@ const StatisticsPage = () => {
                         total={loading ? "..." : `${totalDonations}`}
                         subtitle={
                             shouldGroupByMonth
-                                ? "Biểu đồ số lượt donate thành công theo tháng"
-                                : "Biểu đồ số lượt donate thành công theo ngày"
+                                ? "Biểu đồ doanh thu theo tháng"
+                                : ""
                         }
                         points={chartPoints.map((item) => ({
                             label: item.label,
@@ -314,7 +308,7 @@ const StatisticsPage = () => {
                         subtitle={
                             shouldGroupByMonth
                                 ? "Biểu đồ doanh thu theo tháng"
-                                : "Biểu đồ doanh thu theo ngày"
+                                : ""
                         }
                         points={chartPoints.map((item) => ({
                             label: item.label,

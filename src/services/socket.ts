@@ -5,7 +5,7 @@ let stompClient: Client | null = null;
 let isConnected = false;
 let pendingSubscribes: (() => void)[] = [];
 
-const WS_URL = "http://localhost:8080/ws";
+const WS_URL = "http://192.168.181.130:8080/ws";
 
 export const connectWebSocket = () => {
     if (stompClient) return stompClient;

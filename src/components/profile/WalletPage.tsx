@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../app/store";
 import QRWidget from "../../components/QRWidget";
@@ -8,18 +8,7 @@ import { getMyWalletThunk } from "../../features/wallet/walletSlice";
 
 type WalletAction = "deposit" | "withdraw";
 type WalletHistoryFilter = "incoming" | "outgoing" | "pending";
-type WalletHistoryDirection = "deposit" | "withdraw" | "pending";
-
-type WalletHistoryItem = {
-    id: number;
-    type: WalletHistoryDirection;
-    filter: WalletHistoryFilter;
-    title: string;
-    amount: number;
-    note: string;
-    time: string;
-    sign: "+" | "-";
-};
+type WalletHistoryDirection = "deposit" | "withdraw" | "pending" | "pending-withdraw";
 
 type WalletTransactionType =
     | "DEPOSIT"
@@ -28,6 +17,19 @@ type WalletTransactionType =
     | "DONATION_OUT"
     | "REFUND"
     | string;
+
+type WalletHistoryItem = {
+    id: number;
+    type: WalletHistoryDirection;
+    transactionType: WalletTransactionType;
+    status: string;
+    title: string;
+    amount: number;
+    note: string;
+    time: string;
+    sign: "+" | "-";
+    isPendingWithdraw: boolean;
+};
 
 type WalletTransactionResponseItem = {
     id: number;
@@ -65,11 +67,9 @@ type WithdrawResponse = {
 };
 
 const quickWalletAmounts = [50000, 100000, 200000, 300000, 400000];
-const walletPaymentMethods = [
-    "Chuyển khoản ngân hàng",
-    "Ví Momo",
-    "QR Pay",
-];
+const incomingTransactionTypes = new Set<WalletTransactionType>(["DEPOSIT", "DONATION_IN", "REFUND"]);
+const outgoingTransactionTypes = new Set<WalletTransactionType>(["WITHDRAW", "DONATION_OUT"]);
+const walletPaymentMethods = ["Chuyển khoản ngân hàng", "Ví Momo", "QR Pay"];
 
 const formatMoney = (value?: number) => {
     if (value == null) return "0đ";
@@ -78,7 +78,7 @@ const formatMoney = (value?: number) => {
         style: "currency",
         currency: "VND",
         maximumFractionDigits: 0,
-    }).format(value);
+    }).format(value).replace("₫", "đ");
 };
 
 const formatNumberDisplay = (value?: number) => {
@@ -98,48 +98,55 @@ const formatDateTime = (value: string) =>
         year: "numeric",
     }).format(new Date(value));
 
-const getWalletTransactionMeta = (type: WalletTransactionType) => {
-    switch (type) {
-        case "DEPOSIT":
-            return {
-                label: "Nạp ví",
-                historyType: "deposit" as const,
-            };
-        case "DONATION_IN":
-            return {
-                label: "Nhận donate",
-                historyType: "deposit" as const,
-            };
-        case "REFUND":
-            return {
-                label: "Hoàn tiền",
-                historyType: "deposit" as const,
-            };
-        case "WITHDRAW":
-            return {
-                label: "Rút ví",
-                historyType: "withdraw" as const,
-            };
-        case "DONATION_OUT":
-            return {
-                label: "Gửi donate",
-                historyType: "withdraw" as const,
-            };
-        default:
-            return {
-                label: type,
-                historyType: "deposit" as const,
-            };
-    }
+const formatDateKey = (value: string) => {
+    const date = new Date(value);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+};
+
+const formatSelectedDateLabel = (value: string) =>
+    new Intl.DateTimeFormat("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+    }).format(new Date(value));
+
+const getRelativeDate = (offset: number) => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() + offset);
+    return formatDateKey(date.toISOString());
 };
 
 const normalizeTransactionStatus = (status?: string | null) =>
     String(status || "").trim().toUpperCase();
 
-const isPendingTransaction = (status?: string | null) => {
-    const normalized = normalizeTransactionStatus(status);
+const isIncomingTransactionType = (type?: WalletTransactionType | null) =>
+    incomingTransactionTypes.has(String(type || "").trim().toUpperCase());
 
-    return normalized !== "" && normalized !== "SUCCESS" && normalized !== "COMPLETED";
+const isOutgoingTransactionType = (type?: WalletTransactionType | null) =>
+    outgoingTransactionTypes.has(String(type || "").trim().toUpperCase());
+
+const isPendingTransaction = (status?: string | null) => normalizeTransactionStatus(status) === "PENDING";
+const isSuccessfulTransaction = (status?: string | null) => normalizeTransactionStatus(status) === "SUCCESS";
+
+const getWalletTransactionMeta = (type: WalletTransactionType) => {
+    switch (type) {
+        case "DEPOSIT":
+            return { label: "Nạp ví", historyType: "deposit" as const };
+        case "DONATION_IN":
+            return { label: "Nhận donate", historyType: "deposit" as const };
+        case "REFUND":
+            return { label: "Hoàn tiền", historyType: "deposit" as const };
+        case "WITHDRAW":
+            return { label: "Rút ví", historyType: "withdraw" as const };
+        case "DONATION_OUT":
+            return { label: "Gửi donate", historyType: "withdraw" as const };
+        default:
+            return { label: type, historyType: "deposit" as const };
+    }
 };
 
 const buildWalletTransactionNote = (item: WalletTransactionResponseItem) => {
@@ -158,6 +165,37 @@ const buildWalletTransactionNote = (item: WalletTransactionResponseItem) => {
     return "Giao dịch ví";
 };
 
+const matchesWalletHistoryFilter = (item: WalletHistoryItem, filter: WalletHistoryFilter) => {
+    if (filter === "incoming") {
+        return isIncomingTransactionType(item.transactionType);
+    }
+
+    if (filter === "outgoing") {
+        return isOutgoingTransactionType(item.transactionType) && isSuccessfulTransaction(item.status);
+    }
+
+    return isPendingTransaction(item.status);
+};
+
+const getWalletHistoryAmountTone = (
+    item: WalletHistoryItem,
+    activeFilter: WalletHistoryFilter
+): WalletHistoryDirection => {
+    if (activeFilter === "pending") {
+        return item.isPendingWithdraw ? "pending-withdraw" : "pending";
+    }
+
+    return isIncomingTransactionType(item.transactionType) ? "deposit" : "withdraw";
+};
+
+const getWalletHistorySign = (item: WalletHistoryItem, activeFilter: WalletHistoryFilter) => {
+    if (activeFilter === "pending") {
+        return "";
+    }
+
+    return item.sign;
+};
+
 const WalletPage = () => {
     const dispatch = useDispatch<AppDispatch>();
     const wallet = useSelector((state: RootState) => state.wallet.wallet);
@@ -171,11 +209,15 @@ const WalletPage = () => {
     const [walletHistory, setWalletHistory] = useState<WalletHistoryItem[]>([]);
     const [walletHistoryLoading, setWalletHistoryLoading] = useState(false);
     const [walletHistoryError, setWalletHistoryError] = useState("");
+    const [historyRangeStart, setHistoryRangeStart] = useState("");
+    const [historyRangeEnd, setHistoryRangeEnd] = useState("");
+    const [isHistoryRangeOpen, setIsHistoryRangeOpen] = useState(false);
     const [depositMethod, setDepositMethod] = useState(walletPaymentMethods[0]);
     const [depositBusy, setDepositBusy] = useState(false);
     const [depositError, setDepositError] = useState("");
     const [depositPayment, setDepositPayment] = useState<WalletQrPayment | null>(null);
     const [withdrawBusy, setWithdrawBusy] = useState(false);
+    const historyRangePanelRef = useRef<HTMLDivElement | null>(null);
 
     const fetchWalletHistory = async () => {
         try {
@@ -190,21 +232,19 @@ const WalletPage = () => {
                 items.map((item) => {
                     const meta = getWalletTransactionMeta(item.type);
                     const pending = isPendingTransaction(item.status);
-                    const direction = pending ? "pending" : meta.historyType;
+                    const isPendingWithdraw = pending && String(item.type).trim().toUpperCase() === "WITHDRAW";
 
                     return {
                         id: item.id,
-                        type: direction,
-                        filter: pending
-                            ? "pending"
-                            : meta.historyType === "deposit"
-                                ? "incoming"
-                                : "outgoing",
+                        type: isPendingWithdraw ? "pending-withdraw" : pending ? "pending" : meta.historyType,
+                        transactionType: item.type,
+                        status: item.status,
                         title: meta.label,
                         amount: item.netAmount ?? item.amount ?? 0,
                         note: buildWalletTransactionNote(item),
                         time: item.createdAt,
                         sign: meta.historyType === "deposit" ? "+" : "-",
+                        isPendingWithdraw,
                     };
                 })
             );
@@ -226,25 +266,82 @@ const WalletPage = () => {
         void fetchWalletHistory();
     }, []);
 
+    useEffect(() => {
+        if (!isHistoryRangeOpen) {
+            return;
+        }
+
+        const handleClickOutside = (event: MouseEvent) => {
+            if (!historyRangePanelRef.current?.contains(event.target as Node)) {
+                setIsHistoryRangeOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [isHistoryRangeOpen]);
+
     const balance = wallet?.balance ?? 0;
     const frozenBalance = wallet?.frozenBalance ?? 0;
     const amountValue = Number(walletAmount);
     const depositFee = walletTab === "deposit" && amountValue > 0 ? Math.round(amountValue * 0.01) : 0;
     const depositTotal = walletTab === "deposit" && amountValue > 0 ? amountValue + depositFee : 0;
 
+    const dateFilteredHistory = useMemo(
+        () =>
+            walletHistory.filter((item) => {
+                const itemDate = formatDateKey(item.time);
+
+                if (historyRangeStart && itemDate < historyRangeStart) {
+                    return false;
+                }
+
+                if (historyRangeEnd && itemDate > historyRangeEnd) {
+                    return false;
+                }
+
+                return true;
+            }),
+        [historyRangeEnd, historyRangeStart, walletHistory]
+    );
+
     const filteredHistory = useMemo(
-        () => walletHistory.filter((item) => item.filter === walletHistoryFilter),
-        [walletHistory, walletHistoryFilter]
+        () => dateFilteredHistory.filter((item) => matchesWalletHistoryFilter(item, walletHistoryFilter)),
+        [dateFilteredHistory, walletHistoryFilter]
     );
 
     const historyCounts = useMemo(
         () => ({
-            incoming: walletHistory.filter((item) => item.filter === "incoming").length,
-            outgoing: walletHistory.filter((item) => item.filter === "outgoing").length,
-            pending: walletHistory.filter((item) => item.filter === "pending").length,
+            incoming: dateFilteredHistory.filter((item) => matchesWalletHistoryFilter(item, "incoming")).length,
+            outgoing: dateFilteredHistory.filter((item) => matchesWalletHistoryFilter(item, "outgoing")).length,
+            pending: dateFilteredHistory.filter((item) => matchesWalletHistoryFilter(item, "pending")).length,
         }),
-        [walletHistory]
+        [dateFilteredHistory]
     );
+
+    const applyHistoryPreset = (preset: "today" | "7days" | "30days" | "all") => {
+        if (preset === "today") {
+            const today = getRelativeDate(0);
+            setHistoryRangeStart(today);
+            setHistoryRangeEnd(today);
+            return;
+        }
+
+        if (preset === "7days") {
+            setHistoryRangeStart(getRelativeDate(-6));
+            setHistoryRangeEnd(getRelativeDate(0));
+            return;
+        }
+
+        if (preset === "30days") {
+            setHistoryRangeStart(getRelativeDate(-29));
+            setHistoryRangeEnd(getRelativeDate(0));
+            return;
+        }
+
+        setHistoryRangeStart("");
+        setHistoryRangeEnd("");
+    };
 
     const handleCreateDepositQr = async () => {
         if (!amountValue || amountValue <= 0) {
@@ -536,10 +633,89 @@ const WalletPage = () => {
 
                     <div className="wallet-history-card">
                         <div className="wallet-history-head">
-                            <div>
-                                <h4>Giao dịch gần đây</h4>
+                            <div className="wallet-history-head-copy">
+                                <h4>Lịch sử giao dịch</h4>
                             </div>
-                            <span>{filteredHistory.length}</span>
+
+                            <div className="wallet-history-tools" ref={historyRangePanelRef}>
+                                <button
+                                    type="button"
+                                    className={`wallet-history-date-trigger${historyRangeStart || historyRangeEnd ? " active" : ""}`}
+                                    onClick={() => setIsHistoryRangeOpen((prev) => !prev)}
+                                    title={
+                                        historyRangeStart || historyRangeEnd
+                                            ? `${historyRangeStart ? formatSelectedDateLabel(historyRangeStart) : "..."} - ${historyRangeEnd ? formatSelectedDateLabel(historyRangeEnd) : "..."}`
+                                            : "Chọn khoảng thời gian"
+                                    }
+                                    aria-label="Chọn khoảng thời gian"
+                                >
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path
+                                            d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a3 3 0 0 1 3 3v11a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h1V3a1 1 0 0 1 1-1Zm13 8H4v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8ZM5 6a1 1 0 0 0-1 1v1h16V7a1 1 0 0 0-1-1h-1v1a1 1 0 1 1-2 0V6H8v1a1 1 0 1 1-2 0V6H5Z"
+                                            fill="currentColor"
+                                        />
+                                    </svg>
+                                </button>
+
+                                {(historyRangeStart || historyRangeEnd) && (
+                                    <button
+                                        type="button"
+                                        className="wallet-history-date-clear"
+                                        onClick={() => {
+                                            setHistoryRangeStart("");
+                                            setHistoryRangeEnd("");
+                                        }}
+                                    >
+                                        Bỏ lọc
+                                    </button>
+                                )}
+
+                                <span className="wallet-history-count">{filteredHistory.length} mục</span>
+
+                                {isHistoryRangeOpen && (
+                                    <div className="wallet-history-range-panel">
+                                        <div className="wallet-history-range-head">
+                                            <strong>Chọn khoảng thời gian</strong>
+                                            <button
+                                                type="button"
+                                                className="wallet-history-range-close"
+                                                onClick={() => setIsHistoryRangeOpen(false)}
+                                            >
+                                                Đóng
+                                            </button>
+                                        </div>
+
+                                        <div className="wallet-history-range-fields">
+                                            <label className="wallet-history-range-field">
+                                                <span>Từ ngày</span>
+                                                <input
+                                                    type="date"
+                                                    value={historyRangeStart}
+                                                    max={historyRangeEnd || undefined}
+                                                    onChange={(e) => setHistoryRangeStart(e.target.value)}
+                                                />
+                                            </label>
+
+                                            <label className="wallet-history-range-field">
+                                                <span>Đến ngày</span>
+                                                <input
+                                                    type="date"
+                                                    value={historyRangeEnd}
+                                                    min={historyRangeStart || undefined}
+                                                    onChange={(e) => setHistoryRangeEnd(e.target.value)}
+                                                />
+                                            </label>
+                                        </div>
+
+                                        <div className="wallet-history-range-presets">
+                                            <button type="button" onClick={() => applyHistoryPreset("today")}>Hôm nay</button>
+                                            <button type="button" onClick={() => applyHistoryPreset("7days")}>7 ngày</button>
+                                            <button type="button" onClick={() => applyHistoryPreset("30days")}>30 ngày</button>
+                                            <button type="button" onClick={() => applyHistoryPreset("all")}>Tất cả</button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         <div className="wallet-history-tabs">
@@ -575,15 +751,25 @@ const WalletPage = () => {
                             {!walletHistoryLoading && !walletHistoryError && filteredHistory.length === 0 && (
                                 <p className="wallet-inline-message">Chưa có giao dịch nào trong nhóm này.</p>
                             )}
+
                             {!walletHistoryLoading && !walletHistoryError && filteredHistory.map((item) => (
-                                <div className="wallet-history-item" key={item.id}>
+                                <div
+                                    className={`wallet-history-item${item.isPendingWithdraw ? " wallet-history-item--pending-withdraw" : ""}`}
+                                    key={item.id}
+                                >
                                     <div className="wallet-history-main">
-                                        <strong>{item.title}</strong>
+                                        <div className="wallet-history-title-row">
+                                            <strong>{item.title}</strong>
+                                        </div>
                                         <p>{item.note}</p>
                                     </div>
 
-                                    <div className={`wallet-history-amount ${item.type}`}>
-                                        <span>{item.sign}{formatMoney(item.amount).replace("₫", "đ")}</span>
+                                    {item.isPendingWithdraw && (
+                                        <span className="wallet-history-badge">Đang duyệt</span>
+                                    )}
+
+                                    <div className={`wallet-history-amount ${getWalletHistoryAmountTone(item, walletHistoryFilter)}`}>
+                                        <span>{getWalletHistorySign(item, walletHistoryFilter)}{formatMoney(item.amount)}</span>
                                         <small>{formatDateTime(item.time)}</small>
                                     </div>
                                 </div>

@@ -285,7 +285,6 @@ const DonateObsSettings = () => {
                 <div className="obs-header">
                     <div>
                         <h2>Cài Đặt Donate</h2>
-                        <p>Cài đặt hiển thị và các tùy chỉnh khác</p>
                     </div>
                 </div>
 
