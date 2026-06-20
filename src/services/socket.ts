@@ -5,7 +5,7 @@ let stompClient: Client | null = null;
 let isConnected = false;
 let pendingSubscribes: (() => void)[] = [];
 
-const WS_URL = "http://192.168.181.130:8080/ws";
+const WS_URL = "https://c2da-2402-800-6f61-ec4-bd24-b7bb-97d3-927e.ngrok-free.app/ws";
 
 export const connectWebSocket = () => {
     if (stompClient) return stompClient;
